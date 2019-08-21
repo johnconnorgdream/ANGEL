@@ -1,0 +1,218 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="AngelCore\amem.cpp" />
+    <ClCompile Include="AngelCore\execute.cpp" />
+    <ClCompile Include="AngelCore\lib.cpp" />
+    <ClCompile Include="AngelCore\parse.cpp" />
+    <ClCompile Include="AngelCore\runtime.cpp" />
+    <ClCompile Include="AngelCore\shell.cpp" />
+    <ClCompile Include="AngelCore\unicode.cpp" />
+    <ClCompile Include="Extension\fs\filesystem.cpp" />
+    <ClCompile Include="Extension\fs\fs.cpp" />
+    <ClCompile Include="Extension\initext.cpp" />
+    <ClCompile Include="Extension\socket\socket.cpp" />
+    <ClCompile Include="Extension\thread\thread.cpp" />
+    <ClCompile Include="Extension\time\time.cpp" />
+    <ClCompile Include="Extension\xml\xmlcompile.cpp" />
+    <ClCompile Include="Extension\xml\xmlparse.cpp" />
+    <ClCompile Include="Object\abytes.cpp" />
+    <ClCompile Include="Object\adict.cpp" />
+    <ClCompile Include="Object\afunction.cpp" />
+    <ClCompile Include="Object\alist.cpp" />
+    <ClCompile Include="Object\anumber.cpp" />
+    <ClCompile Include="Object\aobject.cpp" />
+    <ClCompile Include="Object\arange.cpp" />
+    <ClCompile Include="Object\aset.cpp" />
+    <ClCompile Include="Object\astring.cpp" />
+    <ClCompile Include="Object\a_re.cpp" />
+    <ClCompile Include="Tools\common.cpp" />
+    <ClCompile Include="Tools\compilerutil.cpp" />
+    <ClCompile Include="Tools\stringutil.cpp" />
+    <ClCompile Include="Tools\util.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="Extension\fs\_filesystem.h" />
+    <ClInclude Include="Extension\initext.h" />
+    <ClInclude Include="Extension\socket\_socket.h" />
+    <ClInclude Include="Extension\thread\_thread.h" />
+    <ClInclude Include="Extension\time\_time.h" />
+    <ClInclude Include="Extension\xml\_xmlcompile.h" />
+    <ClInclude Include="Include\abytes.h" />
+    <ClInclude Include="Include\adict.h" />
+    <ClInclude Include="Include\aenv.h" />
+    <ClInclude Include="Include\aexpimp.h" />
+    <ClInclude Include="Include\afunction.h" />
+    <ClInclude Include="Include\alist.h" />
+    <ClInclude Include="Include\amem.h" />
+    <ClInclude Include="Include\angel.h" />
+    <ClInclude Include="Include\anumber.h" />
+    <ClInclude Include="Include\aobject.h" />
+    <ClInclude Include="Include\arange.h" />
+    <ClInclude Include="Include\aset.h" />
+    <ClInclude Include="Include\astring.h" />
+    <ClInclude Include="Include\a_re.h" />
+    <ClInclude Include="Include\bytecode.h" />
+    <ClInclude Include="Include\compilerutil.h" />
+    <ClInclude Include="Include\data.h" />
+    <ClInclude Include="Include\execute.h" />
+    <ClInclude Include="Include\hash.h" />
+    <ClInclude Include="Include\lib.h" />
+    <ClInclude Include="Include\parse.h" />
+    <ClInclude Include="Include\runtime.h" />
+    <ClInclude Include="Include\shell.h" />
+    <ClInclude Include="Include\stringutil.h" />
+    <ClInclude Include="Include\typeconfig.h" />
+    <ClInclude Include="Include\unicodeTables.h" />
+    <ClInclude Include="Include\util.h" />
+    <ClInclude Include="Include\_common.h" />
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{1B5F40D0-1DFB-4298-855E-EAB8CA752672}</ProjectGuid>
+    <Keyword>Win32Proj</Keyword>
+    <RootNamespace>angel3</RootNamespace>
+    <ProjectName>Angel</ProjectName>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <LinkIncremental>true</LinkIncremental>
+    <OutDir>$(SolutionDir)Debug</OutDir>
+    <IncludePath>$(MSBuildProjectDirectory)\Include;$(IncludePath)</IncludePath>
+    <SourcePath>F:\Visual Studio2010\vc\vcprojects\angel3\angel3\Extension;$(SourcePath)</SourcePath>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <LinkIncremental>true</LinkIncremental>
+    <OutDir>F:\Visual Studio2010\vc\程序</OutDir>
+    <IncludePath>F:\Visual Studio2010\vc\vcprojects\angel3\angel3\Include;$(IncludePath)</IncludePath>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <LinkIncremental>false</LinkIncremental>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <LinkIncremental>false</LinkIncremental>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>MaxSpeed</Optimization>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;_USRDLL;ANGEL3_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <BasicRuntimeChecks>Default</BasicRuntimeChecks>
+      <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <EnableFiberSafeOptimizations>true</EnableFiberSafeOptimizations>
+      <WholeProgramOptimization>true</WholeProgramOptimization>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <OutputFile>$(OutDir)$(TargetName)$(TargetExt)</OutputFile>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <ClCompile>
+      <PrecompiledHeader>
+      </PrecompiledHeader>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>Disabled</Optimization>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;_USRDLL;ANGEL3_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <PrecompiledHeader>
+      </PrecompiledHeader>
+      <Optimization>MaxSpeed</Optimization>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;_USRDLL;ANGEL3_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <PrecompiledHeader>
+      </PrecompiledHeader>
+      <Optimization>MaxSpeed</Optimization>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;_USRDLL;ANGEL3_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+    </Link>
+  </ItemDefinitionGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>

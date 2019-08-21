@@ -1,0 +1,234 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="资源文件">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    </Filter>
+    <Filter Include="Extension">
+      <UniqueIdentifier>{a0e7542e-082f-4146-a28d-0f92c2ac6933}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Extension\fs">
+      <UniqueIdentifier>{e5018401-cb89-42ef-a283-451fb60bbea7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Extension\xml">
+      <UniqueIdentifier>{a5c832f7-d423-4c54-be21-f6756508e7be}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Extension\thread">
+      <UniqueIdentifier>{f2c20efe-bfb3-4fcb-98fa-a9753d65751d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Extension\socket">
+      <UniqueIdentifier>{575f2adb-38f8-4355-a3a9-d234da8d01b8}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Tools">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="Extension\time">
+      <UniqueIdentifier>{7258d2f3-c8f4-4f42-85c0-196e0b0f9a35}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="include">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hpp;hxx;hm;inl;inc;xsd</Extensions>
+    </Filter>
+    <Filter Include="AngelCore">
+      <UniqueIdentifier>{9e8bc6cc-eb3e-4925-ad01-868b0a756010}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Object">
+      <UniqueIdentifier>{b6624fa0-27e1-4a1b-a3e8-ecdf771cf52f}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="AngelCore\amem.cpp">
+      <Filter>AngelCore</Filter>
+    </ClCompile>
+    <ClCompile Include="AngelCore\execute.cpp">
+      <Filter>AngelCore</Filter>
+    </ClCompile>
+    <ClCompile Include="AngelCore\lib.cpp">
+      <Filter>AngelCore</Filter>
+    </ClCompile>
+    <ClCompile Include="AngelCore\parse.cpp">
+      <Filter>AngelCore</Filter>
+    </ClCompile>
+    <ClCompile Include="AngelCore\runtime.cpp">
+      <Filter>AngelCore</Filter>
+    </ClCompile>
+    <ClCompile Include="AngelCore\shell.cpp">
+      <Filter>AngelCore</Filter>
+    </ClCompile>
+    <ClCompile Include="AngelCore\unicode.cpp">
+      <Filter>AngelCore</Filter>
+    </ClCompile>
+    <ClCompile Include="Extension\fs\filesystem.cpp">
+      <Filter>Extension\fs</Filter>
+    </ClCompile>
+    <ClCompile Include="Extension\fs\fs.cpp">
+      <Filter>Extension\fs</Filter>
+    </ClCompile>
+    <ClCompile Include="Extension\socket\socket.cpp">
+      <Filter>Extension\socket</Filter>
+    </ClCompile>
+    <ClCompile Include="Extension\thread\thread.cpp">
+      <Filter>Extension\thread</Filter>
+    </ClCompile>
+    <ClCompile Include="Extension\time\time.cpp">
+      <Filter>Extension\time</Filter>
+    </ClCompile>
+    <ClCompile Include="Extension\xml\xmlcompile.cpp">
+      <Filter>Extension\xml</Filter>
+    </ClCompile>
+    <ClCompile Include="Extension\xml\xmlparse.cpp">
+      <Filter>Extension\xml</Filter>
+    </ClCompile>
+    <ClCompile Include="Object\a_re.cpp">
+      <Filter>Object</Filter>
+    </ClCompile>
+    <ClCompile Include="Object\abytes.cpp">
+      <Filter>Object</Filter>
+    </ClCompile>
+    <ClCompile Include="Object\adict.cpp">
+      <Filter>Object</Filter>
+    </ClCompile>
+    <ClCompile Include="Object\afunction.cpp">
+      <Filter>Object</Filter>
+    </ClCompile>
+    <ClCompile Include="Object\alist.cpp">
+      <Filter>Object</Filter>
+    </ClCompile>
+    <ClCompile Include="Object\anumber.cpp">
+      <Filter>Object</Filter>
+    </ClCompile>
+    <ClCompile Include="Object\aobject.cpp">
+      <Filter>Object</Filter>
+    </ClCompile>
+    <ClCompile Include="Object\arange.cpp">
+      <Filter>Object</Filter>
+    </ClCompile>
+    <ClCompile Include="Object\aset.cpp">
+      <Filter>Object</Filter>
+    </ClCompile>
+    <ClCompile Include="Object\astring.cpp">
+      <Filter>Object</Filter>
+    </ClCompile>
+    <ClCompile Include="Tools\common.cpp">
+      <Filter>Tools</Filter>
+    </ClCompile>
+    <ClCompile Include="Tools\compilerutil.cpp">
+      <Filter>Tools</Filter>
+    </ClCompile>
+    <ClCompile Include="Tools\stringutil.cpp">
+      <Filter>Tools</Filter>
+    </ClCompile>
+    <ClCompile Include="Tools\util.cpp">
+      <Filter>Tools</Filter>
+    </ClCompile>
+    <ClCompile Include="Extension\initext.cpp">
+      <Filter>Extension</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="Extension\fs\_filesystem.h">
+      <Filter>Extension\fs</Filter>
+    </ClInclude>
+    <ClInclude Include="Extension\socket\_socket.h">
+      <Filter>Extension\socket</Filter>
+    </ClInclude>
+    <ClInclude Include="Extension\thread\_thread.h">
+      <Filter>Extension\thread</Filter>
+    </ClInclude>
+    <ClInclude Include="Extension\time\_time.h">
+      <Filter>Extension\time</Filter>
+    </ClInclude>
+    <ClInclude Include="Extension\xml\_xmlcompile.h">
+      <Filter>Extension\xml</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\_common.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\a_re.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\abytes.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\adict.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\aenv.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\aexpimp.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\afunction.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\alist.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\amem.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\angel.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\anumber.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\aobject.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\arange.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\aset.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\astring.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\bytecode.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\compilerutil.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\data.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\execute.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\hash.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\lib.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\parse.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\runtime.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\shell.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\stringutil.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\typeconfig.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\unicodeTables.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\util.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="Extension\initext.h">
+      <Filter>Extension</Filter>
+    </ClInclude>
+  </ItemGroup>
+</Project>
