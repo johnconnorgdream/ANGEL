@@ -1,0 +1,529 @@
+/*
+1、目前存在的几个问题包括无预地址的运算不能进行
+2、内存清理机制并不是十分同步。尚有待处理
+
+
+统一进行垃圾回收，但需要在有些计算中使用，对列表和字符串的连接运算中只需要回收angel_ref2的
+
+*/
+lib struct
+ismatrix(a)
+{
+	if(type(a) != 'array') ret false
+	old = a[0]
+	for(item in a)
+	{
+		if(type(item) == 'array')
+		{
+			if(old.size() != item.size()) 
+				ret false
+		}
+		else
+		{
+			if(type(item) != 'number')
+				ret false
+		}
+	}
+	ret true
+}
+addmatrix(a,b)
+{
+	res=[]
+	if(!ismatrix(b) || !ismatrix(b))
+	{
+		print('矩阵乘法必须都是矩阵！')
+		ret []
+	}
+	if(a.size()!=b.size()){
+		print('矩阵加法的行数必须相同！')
+		ret []
+	}
+	for(i=0 i<a.size() i++)
+	{
+		row=[]
+		for(j=0 j<a[i].size() j++)
+		{
+			if(type(a[i]) != 'array' || type(b[i]) != 'array')
+			{
+				print('比')
+				ret []
+			}
+			if(a[i].size() != b[i].size()) {
+				print('valid！')
+				ret []
+			}
+			row.add(a[i][j]+b[i][j])
+		}
+		res.add(row)
+	}
+	ret res
+}
+multmatrix(a,b)
+{
+	res=[]
+	print(111)
+	if(!ismatrix(a) || !ismatrix(b))
+	{
+		print('not matrix')
+		ret []
+	}
+	ar = a.size()
+	ac = a[0].size()
+	br = b.size()
+	bc = b[0].size()
+	for(i=0 i<ar i++)
+	{
+		row = []
+		total = 0
+		if(a[i].size() != br) {
+			print('matrix mult invalid')
+			ret []
+		}
+		for(k=0 k<bc k++){
+			for(j=0 j<br j++)
+				total = total + a[i][j]*b[j][k]
+			row.add(total)
+		}
+		res.add(row)
+	}
+	ret res
+}
+max(a,b)
+{
+	if(a > b)
+		ret a
+	else
+		ret b
+}
+cut_rod(p,n)
+{
+	//钢材的切割问题 p表示价格的数组 n表示最优解的执行层次
+	if(n == 0){
+		ret 0
+	}
+	res = 0
+	for(i in 1~n)
+		res = max(res,p[i]+cut_rod(p,n-i))
+	ret res
+}
+cut_rodex(p,n)
+{
+	r = list(n+1)
+	r[0]= 0
+	for(i in 1~n)
+	{
+		res = 0
+		for(j in 1~i)
+			res = max(res,p[j]+r[i-j])
+		r[i] = res
+	}
+	ret r[n]
+}
+count = 0
+linkmultmatrix(n,d)
+{
+	p = matrix(n,0)
+	res = []
+	for(i in 0~n-1)
+	{
+		for(j in i+1~n-1)
+		{
+			max = 0
+			for(k in i~j-1){
+				 temp = max
+				 max = max(p[i][k]+p[k+1][j]+d*d*d,max)
+				 if(temp != max)
+				 	kmin = k
+			}
+			p[i][j] = max
+			res.add(kmin)
+		}
+	}
+	ret [res,p]
+}
+//贪心算法的经典例子
+class hufnode{
+	this(al=null,fr=0,le=null,ri=null)
+	{
+		this.al = al
+		this.fr = fr
+		this.left = le
+		this.right = ri
+	}
+}
+
+transhuflist(encode)
+{
+	head = link.this()
+	for(item in encode){
+		n = hufnode.this(item,encode[item])
+		head.add(n)
+	}
+	ret head
+}
+gettwo(li)
+{
+	min1 = li.next
+	min2 = min1.next
+	p = min2.next
+	while(p != li){
+		pel = p.el
+		min1el = min1.el
+		min2el = min2.el
+		if(pel.fr < min1el.fr)
+		{
+			if(min1el.fr < min2el.fr)
+				min2 = min1
+			min1 = p
+		}
+		else if(pel.fr < min2el.fr)
+			min2 = p
+		p = p.next
+	}
+	ret [min1,min2]
+}
+hufuman(encode)
+{
+	li = transhuflist(encode)
+	head = li.head
+	while(head.next.next != head){
+		min = gettwo(head)
+		n = hufnode.this(null,min[0].el.fr+min[1].el.fr,min[0].el,min[1].el)
+		li.add(n)
+		li.remove(min[0])
+		li.remove(min[1])
+		min[0].next = min[0].pre = min[1].next = min[1].pre = null
+	}
+	ret head.next.el
+}
+class bnode{
+	this(degree,leaf = false){
+		alloc = degree*2-1
+		this.size = 0
+		this.els = list(alloc,null)
+		this.keys = list(alloc,null)    //ki ki+1
+		this.children = list(alloc+1,null)
+		this.leaf = leaf //表示此时是叶子
+	}
+}
+swap(l,i,m,j)
+{
+	tmp = l[i]
+	l[i] = m[j]
+	m[j] = tmp
+}
+//b树
+class btree{
+	
+	this(degree){
+		this.degree = degree
+		this.root = bnode.this(degree,true)  //首先是叶子节点
+		
+		splitup(pa,i){
+			t = degree
+			ch = pa.children[i]
+			//分裂
+			other = bnode.this(degree,ch.leaf)
+			other.keys[0~*] = ch.keys[t~*]
+			other.els[0~*] = ch.els[t~*]
+			if(!other.leaf)
+				other.children[0~*] = ch.children[t~*]
+			other.size = ch.size = t-1
+			
+
+			//合并到pa中
+			pa.keys[i+1~*] = pa.keys[i~*]
+			pa.keys[i] = ch.keys[t-1]
+			pa.els[i+1~*] = pa.els[i~*]
+			pa.els[i] = ch.els[t-1]
+			pa.children[i+2~*] = pa.children[i+1~*]
+			pa.children[i+1] = other
+			pa.size += 1
+
+//			printl('split up!')
+//			ls()
+		}
+		this.count = 0
+		//b树的插入是先分裂（如果需要的话）再插入
+		add(el)
+		{
+			t = degree
+			p = root
+			key = hash(el)
+			pre = null
+			pos = 0
+			if(root.size == t * 2 - 1)
+			{
+				s = bnode.this(t,false)
+				this.root = s
+				s.children[0] = p
+				splitup(s,pos)
+				p = s
+			}
+			while(true)
+			{
+				for(pos = 0; pos < p.size; pos++){
+					if(p.keys[pos] > key){  //应该插到i之前
+						break
+					}
+				}
+				if(p.leaf) //叶子
+				{
+					p.keys[pos+1~*] = p.keys[pos~*]
+					p.keys[pos] = key
+					p.els[pos+1~*] = p.els[pos~*]
+					p.els[pos] = el
+					p.size += 1
+//					printl(el+'直接插入')
+//					ls()
+					break
+				}
+				else
+				{
+					child = p.children[pos]
+					if(child.size == t * 2 - 1) 
+					{
+						splitup(p,pos)
+					}
+					else
+					{
+						//虽然分裂但是pos位置的数据还没被覆盖
+						p = child
+					}
+				} 
+			}
+		}
+		find(el)
+		{
+			p = root
+			key = hash(el)
+			while(true){
+				children = p.children
+				keys = p.keys
+				for(i = 0; i < p.size; i++){
+					if(keys[i] > key){
+						break
+					}
+					else if(keys[i] == key)
+						ret [el,key]
+				}
+				if(p.leaf) ret []
+				p = children[i]
+			}
+		}
+
+		//这里是核心
+		merge(p,i)
+		{
+			n = degree
+			child = p.children[i]
+			//要从上面拿一个下来
+			//表示此时是左
+			child2 = p.children[i+1]
+			if(child2.size == n-1) {
+				//合并child与child1
+				child.keys[child.size] = p.keys[i]
+				child.els[child.size] = p.els[i]
+				child.keys[child.size+1~*] = child2.keys
+				child.els[child.size+1~*] = child2.els
+				if(!child.leaf){
+					child.children[child.size+1~*] = child2.children
+				}
+				child.size = 2*n-1
+
+				//将父节点相应元素去掉
+				if(p.size == 1)
+				{
+					p = child
+					this.root = p
+				}
+				else
+				{
+					p.keys[i~*] = p.keys[i+1~*]
+					p.els[i~*] = p.els[i+1~*]
+					//将原来child右边的孩子给覆盖掉
+					p.children[i+1~*] = p.children[i+2~*]
+					p.size -= 1
+				}
+			}
+			else {
+				//按下去
+				child.els[child.size] = p.els[i]
+				child.keys[child.size] = p.keys[i]
+				if(!child.leaf)
+					child.children[child.size+1] = child2.children[0]
+				child.size += 1
+				//提上去
+				p.keys[i] = child2.keys[0]
+				p.els[i] = child2.els[0]
+				child2.els[0~*] = child2.els[1~*]
+				child2.keys[0~*] = child2.keys[1~*]
+				if(!child2.leaf)
+					child2.children[0~*] = child2.children[1~*]
+				child2.size -= 1
+			}
+			ret child
+		}
+		//可以尝试用递归
+		del(el)
+		{
+			p = root
+			key = hash(el)
+			t = degree
+			while(true)
+			{
+				//先从根中找到符合条件的节点
+				for(i = 0; i < p.size; i++)
+				{
+					child = p.children[i]
+					if(p.keys[i] > key)
+					{
+						if(!p.leaf)
+						{
+							if(child.size == t - 1){
+								p = merge(p,i)
+							}
+							else
+								p = child
+							break
+						}
+						else
+						{
+							ret false
+						}
+					}
+					else if(p.keys[i] == key)
+					{
+						if(p.leaf) 
+						{
+							//直接删除
+							p.els[i~*] = p.els[i+1~*]
+							p.keys[i~*] = p.keys[i+1~*]
+							p.size -= 1
+							ret true
+						}
+						else 
+						{
+							if(child.size == t - 1)
+							{
+								child = merge(p,i)
+							}
+							else
+							{
+								swap(child.keys,child.size-1,p.keys,i)
+								swap(child.els,child.size-1,p.els,i)
+							}
+							p = child
+							break
+						}
+					}
+				}
+			}
+		}
+		_print(p)
+		{
+			print(p.size+'\t')
+			l = p.keys[0~p.size-1]
+			print(l) print('\t')
+			l = p.els[0~p.size-1]
+			print(l) print('\t')
+
+			if(p.leaf) {
+				print('\n') 
+				ret
+			}
+			l = p.children[0~p.size]
+			printl(l)
+
+			for(i in 0~p.size){
+				child = p.children[i]
+				_print(child)
+			}
+		}
+		ls(p)
+		{
+			print(p.size+'\t')
+			l = p.keys[0~p.size-1]
+			print(l) print('\t')
+			l = p.els[0~p.size-1]
+			print(l) print('\t')
+			print(p.leaf) print('\t')
+			if(p.leaf) {
+				print('\n') 
+				ret
+			}
+
+			l = p.children[0~p.size]
+			printl(l)
+		}
+		ls()
+		{
+			printl('keys size\t'+'keyset\t\t\t'+'elset\t\t\t'+'children')
+			_print(root)
+			print('\n')
+			printl('==================='*8)
+			print('\n')
+		}
+	}
+	info()
+	{
+		printl('这是一个b树')
+	}
+}
+//bug：自从加了切片赋值以后出现内存回收错误即函数栈有异常0x000028
+//但是对于initslice中加了ASCREF(range和base)之后就好了
+//另外将原来的initslice换成slicelist之后就出现了NULL等错误
+times = 100
+m = ['a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z']
+l = m * times
+size = m.size()
+loopbtree = (){
+	i = 0
+	bt = btree.this(3)
+	while(i<1000){
+		for(item in l) bt.add(item)
+		bt = btree.this(3)
+		i = i + 1
+	}
+	print('done!')
+}
+loopbtree()
+while(true);
+/*
+//bt.ls()
+printl('b树已经建立')
+res = true
+while(res){
+	res = bt.del('b')
+}
+bt.ls()
+//print(bt.find('a'))
+
+/*
+root = hufuman({'f':5,'e':9,'c':12,'b':13,'d':16,'a':45,'h':15,'i':19,'j':20,'k':34,'l':66,'m':15})
+printl(root.left.left.fr)
+
+
+
+
+//print(cut_rodex([1,5,8,9,10,17,20,24,30]*10000,10000))
+size = 500
+ml = []
+for(i in 0~size)
+	ml.add(matrix(10,1))
+i = 0
+temp = ml[i]
+while(i < ml.size()) {
+	temp = multmatrix(temp,ml[i])
+	i = i + 1
+}
+res = linkmultmatrix(size,10)
+
+
+
+
+
+m = matrix(size,1)
+n = matrix(size,2)
+printl('alloc done!')
+res = multmatrix(n,m)

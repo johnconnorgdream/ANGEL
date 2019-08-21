@@ -1,0 +1,355 @@
+lib struct
+lib a
+
+//内存碎片较大
+//字符集合，操作数（[]、\w\d\s、\W\D\S）
+//运算：连接、并、重复(*、？、+、{}、|)
+//组？(就是一个可能不作为匹配但是可以暂存共后面引用)
+//转移字符
+//位置匹配^、$、\b
+
+
+
+class state
+{
+	this(b,e,arc = '')
+	{
+		this.arc = arc
+		this.start = b
+		this.end = e
+	}
+}
+class nfa{
+	this()
+	{
+		this.start = 0
+		this.end = 0
+		this.matrix = null
+	}
+}
+class regnode
+{
+	this(type,attr = null)
+	{
+		this.id = type
+		this.attr = attr
+		this.b = 0
+		this.e = 0
+		this.left = null
+		this.right = null  //这里可能是单个字符或字符集，或者链表
+	}
+
+}
+class status{
+	this(m,a,b)
+	{
+		this.m = m
+		this.a = a
+		this.b = b
+	}
+}
+priority(op)
+{
+	switch(op)
+	{
+		case ')':
+		case '(':
+			ret 0
+		case '|':
+			ret 1
+		case '&':
+			ret 2
+		case '*':
+		case '?':
+		case '+':
+			ret 3
+	}
+}
+isoprand(c)
+{
+	if(c != '*' && c != '|' && c != '?' && c != '+' && c != '(' && c != ')' && c != '&')
+	ret true
+	ret false
+}
+
+//运算符解析算法先考虑运算符的优先级再考虑特殊运算符比如括号，先单独考虑括号操作再融合到优先级逻辑中
+predeal(s)
+{
+	ls = []
+	ls.add(s[0])
+	i = 1
+	while(i < s.size())
+	{
+		c = s[i]
+		if((isoprand(c) && (s[i - 1] != '(' && s[i - 1] != '|')) || (c == '(' && isoprand(s[i - 1])))
+		{
+			ls.add('&')
+		}
+		ls.add(c)
+		i++
+	}
+	ret ''.join(ls)
+}
+dirlsfile(res,base)
+{
+	print(base)
+	ls = fls(base+'*.*')
+	for(item in ls)
+	{
+		if(item['name'] == null)
+		{
+				
+		}
+		else if(item['name'][0] == '.')	
+		{
+
+		}
+		else if(item['name'].size() == 0)
+		{
+
+		}
+		else if(item['attr'] == 'dir')
+		{
+			dirlsfile(res,base+item['name']+'\\')
+		}
+		else
+		{
+			//c = readfile(base+item['name'],'text')
+			res.add(base+item['name'])
+		}
+	}
+}
+dfa(s)
+{
+	os = stack.this(100)
+	vs = stack.this(100)
+	i = 0
+	pattern = predeal(s)  //添加连接算子
+	while(i < pattern.size())
+	{
+		c = pattern[i]
+		if(isoprand(c))
+		{
+			vs.push(regnode.this('#',c))
+			i++
+		}
+		else
+		{
+			if(os.isempty())
+			{
+				os.push(regnode.this(c))
+				i++
+				continue 
+			}
+			top = os.top().id
+			if((priority(top) < priority(c) || c == '(') && c != ')')  //push的条件
+			{
+				//判断
+				os.push(regnode.this(c))
+				i++
+			}
+			else
+			{
+				if(top == '*' || top == '?' || top == '+')
+				{
+					n = os.pop()
+					n.left = vs.pop()
+					vs.push(n)
+				}
+				else  //pop出来
+				{
+					if(c == ')' && top == '(')
+					{
+						os.pop()
+						i++
+					}
+					else
+					{
+						n = os.pop()
+						n.right = vs.pop()
+						n.left = vs.pop()
+						vs.push(n)
+					}
+				}
+			}
+ 		}
+	}
+	while(!os.isempty())
+	{
+		top = os.top().id
+		if(top == '*' || top == '?' || top == '+')
+		{
+			n = os.pop()
+			n.left = vs.pop()
+			vs.push(n)
+		}
+		else  //pop出来
+		{
+			n = os.pop()
+			n.right = vs.pop()
+			n.left = vs.pop()
+			vs.push(n)
+		}
+	}
+	ret vs.pop()
+}
+g_i = 0
+build_nfa(root)
+{
+	.g_i = 0
+	res = []
+	deal_nfa(res,root)
+	matrix = matrix(.g_i,null)
+	_ret = nfa.this()
+	_ret.matrix = matrix
+	_ret.start = root.b
+	_ret.end = root.e
+	for(item in res)
+	{
+		matrix[item.start][item.end] = item.arc
+	}
+	ret _ret
+}
+deal_nfa(res,tree)
+{
+	if(tree.left)
+		deal_nfa(res,tree.left)
+	if(tree.right)
+		deal_nfa(res,tree.right)
+	if(tree.id == '#')
+	{
+		b = .g_i++
+		e = .g_i++
+		tree.b = b
+		tree.e = e
+		res.add(state.this(b,e,tree.attr))
+	}
+	
+	if(tree.id == '*')
+	{
+		b = .g_i++
+		e = .g_i++
+		tree.b = b
+		tree.e = e
+		res.add(state.this(b,tree.left.b))
+		res.add(state.this(tree.left.e,e))
+		res.add(state.this(tree.left.e,tree.left.b))
+		res.add(state.this(b,e))
+	}
+	else if(tree.id == '+')
+	{
+		tree.b = tree.left.b
+		tree.e = tree.left.e
+		res.add(state.this(tree.e,tree.b))
+	}
+	else if(tree.id == '|')
+	{
+		b = .g_i++
+		e = .g_i++
+		tree.b = b
+		tree.e = e
+		res.add(state.this(b,tree.left.b))
+		res.add(state.this(b,tree.right.b))
+		res.add(state.this(tree.left.e,e))
+		res.add(state.this(tree.right.e,e))
+	}
+	else if(tree.id == '&')
+	{
+		tree.b = tree.left.b
+		tree.e = tree.right.e
+		res.add(state.this(tree.left.e,tree.right.b))
+	}
+}
+match(s,s1)
+{
+	nfa_m = build_nfa(dfa(s1))
+	m = nfa_m.matrix
+	b = nfa_m.start
+	st = stack.this(100)
+	i = 0
+	j = 0
+	res = []
+	resbe = 0
+	resen = 0
+	iscontinue = false
+	visited = list(.g_i,false)
+
+	while(i < s.size())
+	{
+		while(j < .g_i && i < s.size())
+		{
+			//print(j+'\t'+i)
+			if(m[b][j] == s[i] || m[b][j] == '')  //匹配
+			{
+				if(m[b][j] == s[i])  //如果不是''匹配
+				{
+					resen = i
+					i++
+				}
+				if(j == nfa_m.end)  //一次匹配结束，如果还想要进行贪婪匹配需要将栈内的都匹配结束
+				{
+					res.add([resbe,resen])
+					break 
+				}
+				st.push(status.this(b,i,j+1)) 
+				//注意这里的j+1
+
+				if(!visited[j])
+				{
+					b = j
+					visited[b] = true
+					j = 0
+					continue 
+				}
+			}
+			j++
+		}
+		if(!st.isempty())
+		{
+			temp = st.pop()
+			i = temp.a
+			j = temp.b
+			b = temp.m
+			continue 
+		}
+		else
+		{
+			//两种情况：1、连栈中的情况都匹配完了，2、重新开始匹配
+			i++
+			resbe = i
+			resen = resbe
+			j = 0
+			b = nfa_m.start  //i继续
+			st.clear()
+			for(k in 0~visited.size()-1) visited[k] = false
+		}
+	}
+	ret res
+}
+
+f = readfile('F:\Visual Studio2010\vc\文件\斗鱼.html')
+f *= 2
+print(f.size())
+s = 'asdada'
+//res = match(f,'<d+|<d')
+
+r = regular('/(a+|b)?/');
+r.code()
+print('aabbaabcab'.find(r))
+
+pattern = '/((\w*)\.\2\.\2)*/'
+r = regular(pattern)
+source = 'www.www.www' * 20000
+range = 0~source.size() - 1
+r.code()
+res = source.find(r)
+print(res)
+
+
+
+/*
+//m1 = f.find('<dt')
+m2 = f.find('<dd')
+filelist = []
+dirlsfile(filelist,'F:\Java\eclipse\\')
+F:\研究生毕业设计\driver\node_modules\_mongodb@3.3.0-beta2@mongodb\lib\core\connection\connection.js

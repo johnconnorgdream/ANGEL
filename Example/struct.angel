@@ -1,0 +1,254 @@
+class link
+{
+	this()
+	{
+		head = node.this(null); //头指针
+		this.head = head;
+		head.next = head.pre = head
+
+		add(el)
+		{
+			n = node.this(el)
+			temp = head.next
+			n.next = temp
+			temp.pre = n
+			head.next = n
+			n.pre = head
+		}
+		find(el)
+		{
+			for(item = this.head.next; item!=null; item=item.next)
+			{
+				if(item.el == el)
+					ret item;
+			}
+			ret null;
+		}
+		print()
+		{
+			for(item = this.head.next; item!=head; item=item.next)
+			{
+			    .print(item.el);
+			}
+			.print('\n')
+		}
+		remove(n){
+			pren = n.next
+			pren.pre = n.pre
+			n.pre.next = pren
+		}
+		clear()
+		{
+			head.next = head.pre = head
+		}
+	}
+}
+class node{
+	this(el)
+	{
+		this.el = el
+		this.next = null
+		this.pre = null
+	}
+}
+class queue{
+	this(max = 10)
+	{
+		this.maxsize = max
+		this.data = list(max,0)
+		this.front = 0
+		this.rear = 0
+		en(el)
+		{
+			if((this.rear + 1)%this.maxsize == this.front)
+			{
+				print('队列已满！')
+				ret false
+			}
+			this.data[(this.rear++)%this.maxsize] = el
+			ret true
+		}
+		empty()
+		{
+			if(this.rear == this.front) ret true
+			else ret false
+		}
+		out()
+		{
+			if(this.rear == this.front)
+			{
+				print('队列已空！')
+				ret null
+			}
+			ret this.data[(this.front++)%this.maxsize]
+		}
+	}
+}
+class stack{
+	this(max = 10)
+	{
+		this.maxsize = max
+		this.data = list(max,0)
+		this.top = -1
+		clear()
+		{
+			this.top = -1
+			this.data = list(maxsize,0)
+		}
+		top()
+		{
+			if(this.top == -1)
+			{
+				print('栈为空！')
+				ret  null
+			}
+			ret data[this.top]
+		}
+		pop()
+		{
+			if(this.top == -1)
+			{
+				print('栈为空！')
+				ret  null
+			}
+			ret data[this.top--]
+		}
+		push(el)
+		{
+			if(this.top+1 >= this.maxsize)
+			{
+				print('栈满了！')
+				ret false
+			}
+			data[++this.top] = el
+			ret true
+		}
+		isempty()
+		{
+			if(this.top == -1)
+			{
+				ret true
+			}
+			else
+			{
+				ret false
+			}
+		}
+	}
+}
+class binarytree
+{
+	this()
+	{
+		this.root = null
+		build(l)
+		{
+			i = 0
+			temp = treenode.this(l[i++])
+			q = queue.this(1000000)
+			this.root = temp
+			q.en(temp)
+			while(i < l.size())
+			{
+				if(q.empty()) ret 
+				p = q.out()
+				temp = treenode.this(l[i++])
+				p.left = temp
+				if(temp != null) q.en(temp)
+				if(i >= l.size()) break 
+				temp = treenode.this(l[i++])
+				p.right = temp
+				if(temp != null) q.en(temp)	
+			}
+		}
+		_print_h(p)
+		{
+			if(p.left)
+			_print_h(p.left)
+			if(p.right)
+			_print_h(p.right)
+			if(p.el) print(p.el)
+		}
+		print_h()
+		{
+			this._print_h(this.root)
+		}
+		tranversal1()
+		{
+			p = this.root
+			s = stack.this(100)
+			while(p || !s.isempty())
+			{
+				if(!p)
+				{
+					p = s.pop()
+					if(p.el) print(p.el)
+					p = p.right
+				}
+				else
+				{
+					s.push(p)
+					p = p.left
+				}
+			}
+		}
+		tranversal()
+		{
+			p = this.root
+			s = stack.this(100)
+			while(p || !s.isempty())
+			{
+				if(!p)
+				{
+					p = s.pop()
+					if(p.flag == 0)  //说明是第一次
+					{
+						s.push(p)
+						p.flag = 1
+						p = p.right
+					}
+					else
+					{
+						if(p.el) print(p.el)
+						p = null
+					}
+				}
+				else
+				{
+					s.push(p)
+					p = p.left
+				}
+			}
+		}
+	}
+}
+class treenode{
+	this(el)
+	{
+		this.flag = 0
+		this.el = el
+		this.left = this.right = null
+	}
+}
+matrix(row,column,init)
+{
+	res = []
+	for(i in 1~row)
+	{
+		temp = list(column,init)
+		res.add(temp)
+	}
+	ret res
+}
+matrix(num,init=0)
+{
+	ret matrix(num,num,init)
+}
+l = list(10,2)
+tree = binarytree.this()
+input = ['a','b','c','d','e','f']*200000
+input.add(null)
+tree.build(input)
+//tree.print_h()
+//tree.tranversal()
+//tree.tranversal1()

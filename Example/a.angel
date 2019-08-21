@@ -1,0 +1,257 @@
+swap(a, i, j)
+{
+	if(i == j) ret
+	tmp = a[i]
+	a[i] = a[j]
+	a[j] = tmp
+}
+add(a,b)
+{
+	ret a+b
+}
+_add(a,b)
+{
+	ret add(a,b)
+}
+sub(a,b)
+{
+	ret a-b
+}
+fabonacii(a)
+{
+	if(a==1 || a==0)
+		ret 1
+	ret fabonacii(a-1)+fabonacii(a-2)
+}
+test(a,b)
+{
+	ret a
+}
+git(n)
+{
+	ret n
+}
+defaultparam(a,b='hello world')
+{
+	printl(a+b)
+}
+quicksort(l)
+{
+	quicksort(l,0,l.size()-1)
+}
+bubble(l)
+{
+	for(i = 1 i<l.size() i++)
+	{
+		for(j = 0 j < l.size()-i j++)
+		{
+			test = l[j]
+			if(test > l[j+1])
+			{
+				swap(l,j,j+1)
+			}
+		}
+	}
+}
+insert(l)
+{
+	for(i = 1 i <  l.size() i++)
+	{
+		temp = l[i]
+		for(j = i-1 j >= 0 j--)
+		{
+			if(l[j] > temp)
+			{
+				l[j+1] = l[j]
+			}
+			else
+			{
+				l[j+1] = temp
+				break 
+			}
+		}
+	}
+}
+
+ajustdown(l,pos,len = l.size())  //创建大根堆
+{
+	i = pos
+	while(i < len / 2)
+	{
+		parent = i
+		left = 2*parent+1
+		right = left + 1
+
+		if(right < len) 
+		{
+			if(l[left] > l[right])
+			{
+				i = left
+			}
+			else
+			{
+				i = right
+			}
+		}
+		else
+			i = left
+		if(l[i] > l[parent])
+			swap(l,i,parent)
+	}
+}
+initajust(l)
+{
+	for(i = l.size()/2-1 i >= 0 i--)
+	{
+		ajustdown(l,i)
+	}
+}
+heap(l)  //堆排序
+{
+	initajust(l)
+	for(i = l.size()-1 i > 0 i--)
+	{
+		swap(l,0,i)
+		ajustdown(l,0,i)
+	}
+}
+quicksort(l,low,high) 
+{
+	if(low<high)
+	{
+		pivot=findpivot(l,low,high)
+		quicksort(l,low,pivot-1)
+		quicksort(l,pivot+1,high)
+	}
+} 
+partition(array, low, high)
+{
+	p_pos = low
+	pivot = array[p_pos]
+	for (i = low + 1 i < high+1 i++) {
+	    if (array[i] < pivot) {
+			p_pos++
+			swap(array,p_pos,i) 
+	    }
+	}
+	swap(array,low,p_pos)
+	ret p_pos
+}
+findpivot(l,low,high)
+{
+	pivotval=l[low]
+	while(low<high)
+	{
+		while(low<high && l[high]>pivotval) high--
+		if(low<high) 
+		{
+			l[low++]=l[high]
+		}
+		while(low<high && l[low]<pivotval) low++
+		if(low<high)
+		{
+			l[high--] = l[low]
+		}
+	}
+	l[low]=pivotval
+	ret low
+}
+print_content(content)
+{
+	printl('标签名：'+content['name'])
+	printl('标签内容:')
+	printl(content['text'])
+	printl('标签属性：')
+	printl(content['attrs'])
+	children = content['children']
+	i = 0
+	printl('孩子节点为：')
+	if(!children) ret
+	for(i = 0 i<children.size() i++)
+	{
+		print_content(children[i])
+	}
+}
+print_content_select(content,select)
+{
+	name = content['name']
+	children = content['children']
+	i = 0
+	if(name == select)
+	{
+		printl(name)
+		printl('标签内容:')
+		printl(content['text'])
+		printl('标签属性：')
+		printl(content['attrs'])
+	}
+	if(!children) ret
+	for(i = 0 i<children.size() i++)
+	{
+		print_content_select(children[i],select)
+	}
+}
+print_info_xml(xml,select='html')
+{
+	printl('文档类型'+xml['type'])
+	content = xml['head']
+	print_content_select(content,select)
+}
+readfile(filename,mode = 'text')
+{
+	//fopen是内嵌在系统中的函数
+	file = fopen(filename,'!read')
+	if(!file){
+		printl('文件不存在！')
+		ret null
+	}
+	if(mode == 'text') content = fgets(file)
+	else if(mode == 'byte') content = fread(file)
+	fclose(file)
+	ret content  //有不认识的标识符系统一定要指出来
+}
+getlines(content)
+{
+	res = []
+	begin = 0
+	for(i = 0 i < content.size() i++)
+	{
+		if(content[i] == '\n')
+		{
+			//printl(begin+'\t'+(i-1))
+			res.add(content[begin~i-1])
+			begin = i+1
+		}
+		else if(content[i] == '\r')
+		{
+			if(content[i+1] == '\n')
+			{
+				//printl(begin+'\t'+(i-1))
+				res.add(content[begin~i-1])
+				i++
+				begin = i+2
+			}
+		}
+	}
+	ret res
+}
+
+log = ' '
+count = 0
+f1 = 1.1
+i = 0
+path = 'F:\Visual Studio2010\vc\文件\\斗鱼.html'
+file = fopen(path,'!read')
+
+//解析xml文件
+xmlstr = '<html><head><script>var i = 0 i= i+1</script></head></html>'
+xmlstr = readfile(path)
+d = parse(xmlstr,'xml')
+print_info_xml(d,'div')
+c = clock()
+times = 100000
+l = [3,2,4,5,2,5,8,7,3,5]
+l = l*times
+printl(l.size())
+quicksort(l)
+printl('快速排序用时'+(clock()-c)/1000+'秒')

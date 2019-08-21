@@ -1,0 +1,661 @@
+/*
+
+设计心理学
+
+*/
+class manager
+{
+	this(unit)
+	{
+		class.unit = unit
+		this.s = null
+
+		shell()
+		{
+			printl('输入命令：')
+			cmd = scan()
+			while(cmd != 'exit')
+			{
+				switch(cmd)
+				{
+					case 'query':
+						this.printinfo()
+						break 
+					case 'add':
+						printl('id:')
+						id=scan()
+						printl('name:')
+						name=scan()
+						printl('major:')
+						major=scan()
+						addstudent(id,name,major)
+						break 
+					case 'delete':
+						delete()
+						break 
+					default:
+						printl('命令不合法！')
+				}
+
+				printl('输入命令：') 
+				cmd = scan()
+			}
+		}
+		delete()
+		{
+			isfind=0
+			head=student.this(null,null,null)
+			head.next=this.s
+			printl('输入删除的属性：')
+			type=scan()
+			while(1)
+			{
+				if(type=='exit')
+					break
+				else if(type=='all')
+				{
+					this.s=null
+					break
+				}
+				else
+				{
+					printl('输入删除的对象：')
+					val=scan()
+				}
+
+				for(p=head;p.next;p=p.next)
+				{
+					if(type=='major')
+					{
+						while(p.next.getmajor()==val)
+						{
+							p.next=p.next.next
+							isfind=1
+							if(!p.next) break 
+						}
+					}
+					else if(type=='id')
+					{
+						while(p.next.getid()==val)
+						{
+							p.next=p.next.next
+							isfind=1
+							if(!p.next) break
+						}
+					}
+					else if(type=='name')
+					{
+						while(p.next.getname()==val)
+						{
+							p.next=p.next.next
+							isfind=1
+							if(!p.next) break 
+						}
+					}
+					else if(type=='all')
+						break 
+					else
+					{
+						printl('属性不存在！')
+						ret
+					}
+
+					if(!p.next) break 
+
+				}
+				if(isfind==0 && type!='all')
+					printl('没有找到对应的')
+				isfind=1
+				this.s=head.next
+				printl('输入删除的属性：')
+				type=scan()
+			}
+		}
+
+
+		printinfo()
+		{
+			printl('请输入查找属性：')
+			type=scan()
+			while(1)
+			{
+				if(type == 'unit')
+					printl(class.unit)
+				else if(type == 'exit')
+					break
+				else if(type == 'all'){
+					printl('输出所有的')
+				}
+				else
+				{
+					printl('当前查找的属性为'+type)
+					printl('请输入查找的对象：')
+					val=scan()
+					printl('当前对象为'+val)
+				}
+				for(p=this.s p p=p.next)
+				{
+					if(type=='unit')
+						break 
+					else if(type=='major')
+					{
+						if(p.getmajor()==val)
+						{
+							s='id is '+p.getid()+'\t name is '+p.getname()+'\t major is '+p.major
+							printl(s)
+						}
+					}
+					else if(type=='id')
+					{
+						if(p.getid()==val)
+						{
+							s='id is '+p.getid()+'\t name is '+p.getname()+'\t major is '+p.major
+							printl(s)
+						}
+					}
+					else if(type=='name')
+					{
+						if(p.getname()==val)
+						{
+							s='id is '+p.getid()+'\t name is '+p.getname()+'\t major is '+p.major
+							printl(s)
+						}
+					}
+					else if(type=='all')
+					{
+						s='id is '+p.getid()+'\t name is '+p.getname()+'\t major is '+p.major
+						printl(s)
+					}
+					else
+					{
+						printl('属性不存在！')
+						break 
+					}
+				}
+				printl('请输入查找属性：')
+				type=scan()
+			}
+
+		}
+
+
+		printl(content)
+		{
+			.printl(content)
+		}
+
+
+
+		addstudent(id,name,m,rank=0)
+		{
+			stu = student.this(id,name,m,rank)
+			if(s == null)
+				this.s = stu
+			else
+				s.add(stu)
+		}
+		findbyname(name)
+		{
+			ret s.findbyname(name)
+		}
+		findbymajor(major)
+		{
+			ret s.findbymajor(major)
+		}
+	}
+	getunit()
+	{
+		ret class.unit
+	}
+}
+
+
+class student
+{
+	this(id,name,m,rank=0)
+	{
+		this.id=id
+		this.name=name
+		this.major=m
+		this.rank=rank
+		this.next=null
+		setid(id) 
+		{
+			//a=this.getid()
+			this.id=id
+		}
+		getid()
+		{
+			ret id
+		}
+		getid2()
+		{
+			ret getid()
+		}
+		getid3()
+		{
+			ret getid2()
+		}
+		getname()
+		{
+			ret name
+		}
+		getmajor()
+		{
+			ret this.major
+		}
+		add(stu)
+		{
+			p=this
+			while(p.next!=null) p=p.next
+			p.next=stu
+		}
+		findbyname(name)
+		{
+			p=this
+			//printl(p.getname())
+			for(p=this p!=null p=p.next)
+				if(p.getname()==name) ret p
+			ret null
+		}
+		findbymajor(major)
+		{
+			p=this
+			for(p=this p!=null p=p.next)
+				if(p.getmajor()==major) ret p
+			ret null
+		}
+	}
+}
+printtest(a,b=2)
+{
+	while(a > 0)
+	{
+		begin = b++
+		while(b < 1000000000)
+		{
+			a -= 1;
+			b += a--
+		}
+		b += a++
+		c = (a--)*b
+		a--
+		printl('hello' + c + 'kala')
+		//printl(c)
+	}
+}
+//688.5 544.4
+loop = (){
+	i = 0
+	while(i < 100000000) 
+	{
+		i = i + 1
+	}
+	print('done!')
+}
+//后面写库的时候会单独用一个线程来计时
+timer(func,interval,unit='ms'){
+	th = startthread((func,interval,unit){
+		begin = clock(unit)
+		while(true){
+			ch = clock(unit) - begin
+			while(ch < interval) {
+				ch = clock(unit) - begin
+			}
+			//如何动态调用带参数的函数
+			func()
+			//刷新起点
+			begin = clock(unit)
+		}
+	},[func,interval,unit])
+	ret th
+}
+
+times = 1000000
+
+t = timer((){
+	printl('慢慢的这种实现方式被发现是蛋疼且低效的。但当大家试图去拆分和去除GIL的时候，发现大量库代码开发者已经重度依赖GIL而非常难以')
+},1000)
+t = timer((){
+	printl('慢慢的这种实现方式被发现是蛋疼且低效的。但当大家试图去拆分和去除GIL的时候，发现大量库代码开发者已经重度依赖GIL而非常难以')
+},1000)
+t = timer((){
+	printl('慢慢的这种实现方式被发现是蛋疼且低效的。但当大家试图去拆分和去除GIL的时候，发现大量库代码开发者已经重度依赖GIL而非常难以')
+},1000)
+t = timer((){
+	printl('慢慢的这种实现方式被发现是蛋疼且低效的。但当大家试图去拆分和去除GIL的时候，发现大量库代码开发者已经重度依赖GIL而非常难以')
+},1000)
+t = timer((){
+	printl('慢慢的这种实现方式被发现是蛋疼且低效的。但当大家试图去拆分和去除GIL的时候，发现大量库代码开发者已经重度依赖GIL而非常难以')
+},1000)
+t = timer((){
+	printl('慢慢的这种实现方式被发现是蛋疼且低效的。但当大家试图去拆分和去除GIL的时候，发现大量库代码开发者已经重度依赖GIL而非常难以')
+},1000)
+t = timer((){
+	printl('慢慢的这种实现方式被发现是蛋疼且低效的。但当大家试图去拆分和去除GIL的时候，发现大量库代码开发者已经重度依赖GIL而非常难以')
+},1000)
+t = timer((){
+	printl('慢慢的这种实现方式被发现是蛋疼且低效的。但当大家试图去拆分和去除GIL的时候，发现大量库代码开发者已经重度依赖GIL而非常难以')
+},1000)
+t = timer((){
+	printl('慢慢的这种实现方式被发现是蛋疼且低效的。但当大家试图去拆分和去除GIL的时候，发现大量库代码开发者已经重度依赖GIL而非常难以')
+},1000)
+t = timer((){
+	printl('慢慢的这种实现方式被发现是蛋疼且低效的。但当大家试图去拆分和去除GIL的时候，发现大量库代码开发者已经重度依赖GIL而非常难以')
+},1000)
+t = timer((){
+	printl('慢慢的这种实现方式被发现是蛋疼且低效的。但当大家试图去拆分和去除GIL的时候，发现大量库代码开发者已经重度依赖GIL而非常难以')
+},1000)
+t = timer((){
+	printl('慢慢的这种实现方式被发现是蛋疼且低效的。但当大家试图去拆分和去除GIL的时候，发现大量库代码开发者已经重度依赖GIL而非常难以')
+},1000)
+t = timer((){
+	printl('慢慢的这种实现方式被发现是蛋疼且低效的。但当大家试图去拆分和去除GIL的时候，发现大量库代码开发者已经重度依赖GIL而非常难以')
+},1000)
+t = timer((){
+	printl('慢慢的这种实现方式被发现是蛋疼且低效的。但当大家试图去拆分和去除GIL的时候，发现大量库代码开发者已经重度依赖GIL而非常难以')
+},1000)
+t = timer((){
+	printl('慢慢的这种实现方式被发现是蛋疼且低效的。但当大家试图去拆分和去除GIL的时候，发现大量库代码开发者已经重度依赖GIL而非常难以')
+},1000)
+t = timer((){
+	printl('慢慢的这种实现方式被发现是蛋疼且低效的。但当大家试图去拆分和去除GIL的时候，发现大量库代码开发者已经重度依赖GIL而非常难以')
+},1000)
+t = timer((){
+	printl('慢慢的这种实现方式被发现是蛋疼且低效的。但当大家试图去拆分和去除GIL的时候，发现大量库代码开发者已经重度依赖GIL而非常难以')
+},1000)
+t = timer((){
+	printl('慢慢的这种实现方式被发现是蛋疼且低效的。但当大家试图去拆分和去除GIL的时候，发现大量库代码开发者已经重度依赖GIL而非常难以')
+},1000)
+t = timer((){
+	printl('慢慢的这种实现方式被发现是蛋疼且低效的。但当大家试图去拆分和去除GIL的时候，发现大量库代码开发者已经重度依赖GIL而非常难以')
+},1000)
+t = timer((){
+	printl('慢慢的这种实现方式被发现是蛋疼且低效的。但当大家试图去拆分和去除GIL的时候，发现大量库代码开发者已经重度依赖GIL而非常难以')
+},1000)
+t = timer((){
+	printl('慢慢的这种实现方式被发现是蛋疼且低效的。但当大家试图去拆分和去除GIL的时候，发现大量库代码开发者已经重度依赖GIL而非常难以')
+},1000)
+t = timer((){
+	printl('慢慢的这种实现方式被发现是蛋疼且低效的。但当大家试图去拆分和去除GIL的时候，发现大量库代码开发者已经重度依赖GIL而非常难以')
+},1000)
+t = timer((){
+	printl('慢慢的这种实现方式被发现是蛋疼且低效的。但当大家试图去拆分和去除GIL的时候，发现大量库代码开发者已经重度依赖GIL而非常难以')
+},1000)
+t = timer((){
+	printl('慢慢的这种实现方式被发现是蛋疼且低效的。但当大家试图去拆分和去除GIL的时候，发现大量库代码开发者已经重度依赖GIL而非常难以')
+},1000)
+t = timer((){
+	printl('慢慢的这种实现方式被发现是蛋疼且低效的。但当大家试图去拆分和去除GIL的时候，发现大量库代码开发者已经重度依赖GIL而非常难以')
+},1000)t = timer((){
+	printl('慢慢的这种实现方式被发现是蛋疼且低效的。但当大家试图去拆分和去除GIL的时候，发现大量库代码开发者已经重度依赖GIL而非常难以')
+},1000)
+t = timer((){
+	printl('慢慢的这种实现方式被发现是蛋疼且低效的。但当大家试图去拆分和去除GIL的时候，发现大量库代码开发者已经重度依赖GIL而非常难以')
+},1000)
+t = timer((){
+	printl('慢慢的这种实现方式被发现是蛋疼且低效的。但当大家试图去拆分和去除GIL的时候，发现大量库代码开发者已经重度依赖GIL而非常难以')
+},1000)
+t = timer((){
+	printl('慢慢的这种实现方式被发现是蛋疼且低效的。但当大家试图去拆分和去除GIL的时候，发现大量库代码开发者已经重度依赖GIL而非常难以')
+},1000)
+t = timer((){
+	printl('慢慢的这种实现方式被发现是蛋疼且低效的。但当大家试图去拆分和去除GIL的时候，发现大量库代码开发者已经重度依赖GIL而非常难以')
+},1000)
+t = timer((){
+	printl('慢慢的这种实现方式被发现是蛋疼且低效的。但当大家试图去拆分和去除GIL的时候，发现大量库代码开发者已经重度依赖GIL而非常难以')
+},1000)
+t = timer((){
+	printl('慢慢的这种实现方式被发现是蛋疼且低效的。但当大家试图去拆分和去除GIL的时候，发现大量库代码开发者已经重度依赖GIL而非常难以')
+},1000)
+t = timer((){
+	printl('慢慢的这种实现方式被发现是蛋疼且低效的。但当大家试图去拆分和去除GIL的时候，发现大量库代码开发者已经重度依赖GIL而非常难以')
+},1000)
+t = timer((){
+	printl('慢慢的这种实现方式被发现是蛋疼且低效的。但当大家试图去拆分和去除GIL的时候，发现大量库代码开发者已经重度依赖GIL而非常难以')
+},1000)
+t = timer((){
+	printl('慢慢的这种实现方式被发现是蛋疼且低效的。但当大家试图去拆分和去除GIL的时候，发现大量库代码开发者已经重度依赖GIL而非常难以')
+},1000)
+
+t = timer((){
+	printl('慢慢的这种实现方式被发现是蛋疼且低效的。但当大家试图去拆分和去除GIL的时候，发现大量库代码开发者已经重度依赖GIL而非常难以')
+},1000)
+t = timer((){
+	printl('慢慢的这种实现方式被发现是蛋疼且低效的。但当大家试图去拆分和去除GIL的时候，发现大量库代码开发者已经重度依赖GIL而非常难以')
+},1000)
+t = timer((){
+	printl('慢慢的这种实现方式被发现是蛋疼且低效的。但当大家试图去拆分和去除GIL的时候，发现大量库代码开发者已经重度依赖GIL而非常难以')
+},1000)
+t = timer((){
+	printl('慢慢的这种实现方式被发现是蛋疼且低效的。但当大家试图去拆分和去除GIL的时候，发现大量库代码开发者已经重度依赖GIL而非常难以')
+},1000)
+t = timer((){
+	printl('慢慢的这种实现方式被发现是蛋疼且低效的。但当大家试图去拆分和去除GIL的时候，发现大量库代码开发者已经重度依赖GIL而非常难以')
+},1000)
+t = timer((){
+	printl('慢慢的这种实现方式被发现是蛋疼且低效的。但当大家试图去拆分和去除GIL的时候，发现大量库代码开发者已经重度依赖GIL而非常难以')
+},1000)
+t = timer((){
+	printl('慢慢的这种实现方式被发现是蛋疼且低效的。但当大家试图去拆分和去除GIL的时候，发现大量库代码开发者已经重度依赖GIL而非常难以')
+},1000)
+t = timer((){
+	printl('慢慢的这种实现方式被发现是蛋疼且低效的。但当大家试图去拆分和去除GIL的时候，发现大量库代码开发者已经重度依赖GIL而非常难以')
+},1000)
+t = timer((){
+	printl('慢慢的这种实现方式被发现是蛋疼且低效的。但当大家试图去拆分和去除GIL的时候，发现大量库代码开发者已经重度依赖GIL而非常难以')
+},1000)
+t = timer((){
+	printl('慢慢的这种实现方式被发现是蛋疼且低效的。但当大家试图去拆分和去除GIL的时候，发现大量库代码开发者已经重度依赖GIL而非常难以')
+},1000)
+t = timer((){
+	printl('慢慢的这种实现方式被发现是蛋疼且低效的。但当大家试图去拆分和去除GIL的时候，发现大量库代码开发者已经重度依赖GIL而非常难以')
+},1000)
+t = timer((){
+	printl('慢慢的这种实现方式被发现是蛋疼且低效的。但当大家试图去拆分和去除GIL的时候，发现大量库代码开发者已经重度依赖GIL而非常难以')
+},1000)
+
+opertor windows{} 
+
+
+startthread($printtest,[times,4])
+startthread($printtest,[times,4])
+startthread($printtest,[times,4])
+startthread($printtest,[times,4])
+startthread($printtest,[times,4])
+startthread($printtest,[times,4])
+startthread($printtest,[times,4])
+startthread($printtest,[times,4])
+startthread($printtest,[times,4])
+startthread($printtest,[times,4])
+startthread($printtest,[times,4])
+startthread($printtest,[times,4])
+startthread($printtest,[times,4])
+startthread($printtest,[times,4])
+startthread($printtest,[times,4])
+startthread($printtest,[times,4])
+startthread($printtest,[times,4])
+startthread($printtest,[times,4])
+startthread($printtest,[times,4])
+startthread($printtest,[times,4])
+startthread($printtest,[times,4])
+startthread($printtest,[times,4])
+startthread($printtest,[times,4])
+startthread($printtest,[times,4])
+startthread($printtest,[times,4])
+startthread($printtest,[times,4])
+startthread($printtest,[times,4])
+startthread($printtest,[times,4])
+startthread($printtest,[times,4])
+startthread($printtest,[times,4])
+startthread($printtest,[times,4])
+startthread($printtest,[times,4])
+startthread($printtest,[times,4])
+startthread($printtest,[times,4])
+startthread($printtest,[times,4])
+startthread($printtest,[times,4])
+startthread($printtest,[times,4])
+startthread($printtest,[times,4])
+startthread($printtest,[times,4])
+startthread($printtest,[times,4])
+startthread($printtest,[times,4])
+startthread($printtest,[times,4])
+startthread($printtest,[times,4])
+startthread($printtest,[times,4])
+startthread($printtest,[times,4])
+startthread($printtest,[times,4])
+startthread($printtest,[times,4])
+startthread($printtest,[times,4])
+startthread($printtest,[times,4])
+startthread($printtest,[times,4])
+startthread($printtest,[times,4])
+startthread($printtest,[times,4])
+startthread($printtest,[times,4])
+startthread($printtest,[times,4])
+startthread($printtest,[times,4])
+startthread($printtest,[times,4])
+startthread($printtest,[times,4])
+startthread($printtest,[times,4])
+startthread($printtest,[times,4])
+startthread($printtest,[times,4])
+startthread($printtest,[times,4])
+startthread($printtest,[times,4])
+startthread($printtest,[times,4])
+startthread($printtest,[times,4])
+startthread($printtest,[times,4])
+startthread($printtest,[times,4])
+startthread($printtest,[times,4])
+startthread($printtest,[times,4])
+startthread($printtest,[times,4])
+startthread($printtest,[times,4])
+startthread($printtest,[times,4])
+startthread($printtest,[times,4])
+startthread($printtest,[times,4])
+startthread($printtest,[times,4])
+startthread($printtest,[times,4])
+startthread($printtest,[times,4])
+startthread($printtest,[times,4])
+startthread($printtest,[times,4])
+startthread($printtest,[times,4])
+startthread($printtest,[times,4])
+startthread($printtest,[times,4])
+startthread($printtest,[times,4])
+startthread($printtest,[times,4])
+startthread($printtest,[times,4])
+startthread($printtest,[times,4])
+startthread($printtest,[times,4])
+startthread($printtest,[times,4])
+startthread($printtest,[times,4])
+startthread($printtest,[times,4])
+startthread($printtest,[times,4])
+startthread($printtest,[times,4])
+startthread($printtest,[times,4])
+startthread($printtest,[times,4])
+startthread($printtest,[times,4])
+startthread($printtest,[times,4])
+startthread($printtest,[times,4])
+startthread($printtest,[times,4])
+startthread($printtest,[times,4])
+startthread($printtest,[times,4])
+startthread($printtest,[times,4])
+startthread($printtest,[times,4])
+startthread($printtest,[times,4])
+startthread($printtest,[times,4])
+startthread($printtest,[times,4])
+startthread($printtest,[times,4])
+startthread($printtest,[times,4])
+startthread($printtest,[times,4])
+startthread($printtest,[times,4])
+startthread($printtest,[times,4])
+startthread($printtest,[times,4])
+startthread($printtest,[times,4])
+startthread($printtest,[times,4])
+startthread($printtest,[times,4])
+startthread($printtest,[times,4])
+startthread($printtest,[times,4])
+startthread($printtest,[times,4])
+startthread($printtest,[times,4])
+startthread($printtest,[times,4])
+startthread($printtest,[times,4])
+startthread($printtest,[times,4])
+startthread($printtest,[times,4])
+startthread($printtest,[times,4])
+startthread($printtest,[times,4])
+startthread($printtest,[times,4])
+startthread($printtest,[times,4])
+startthread($printtest,[times,4])
+startthread($printtest,[times,4])
+startthread($printtest,[times,4])
+startthread($printtest,[times,4])
+startthread($printtest,[times,4])
+startthread($printtest,[times,4])
+startthread($printtest,[times,4])
+startthread($printtest,[times,4])
+startthread($printtest,[times,4])
+startthread($printtest,[times,4])
+startthread($printtest,[times,4])
+startthread($printtest,[times,4])
+startthread($printtest,[times,4])
+startthread($printtest,[times,4])
+startthread($printtest,[times,4])
+startthread($printtest,[times,4])
+startthread($printtest,[times,4])
+startthread($printtest,[times,4])
+startthread($printtest,[times,4])
+startthread($printtest,[times,4])
+startthread($printtest,[times,4])
+startthread($printtest,[times,4])
+startthread($printtest,[times,4])
+startthread($printtest,[times,4])
+startthread($printtest,[times,4])
+startthread($printtest,[times,4])
+startthread($printtest,[times,4])
+startthread($printtest,[times,4])
+startthread($printtest,[times,4])
+startthread($printtest,[times,4])
+startthread($printtest,[times,4])
+startthread($printtest,[times,4])
+startthread($printtest,[times,4])
+startthread($printtest,[times,4])
+startthread($printtest,[times,4])
+startthread($printtest,[times,4])
+startthread($printtest,[times,4])
+startthread($printtest,[times,4])
+startthread($printtest,[times,4])
+startthread($printtest,[times,4])
+startthread($printtest,[times,4])
+startthread($printtest,[times,4])
+startthread($printtest,[times,4])
+startthread($printtest,[times,4])
+startthread($printtest,[times,4])
+startthread($printtest,[times,4])
+startthread($printtest,[times,4])
+startthread($printtest,[times,4])
+startthread($printtest,[times,4])
+startthread($printtest,[times,4])
+startthread($printtest,[times,4])
+startthread($printtest,[times,4])
+startthread($printtest,[times,4])
+startthread($printtest,[times,4])
+startthread($printtest,[times,4])
+startthread($printtest,[times,4])
+startthread($printtest,[times,4])
+startthread($printtest,[times,4])
+startthread($printtest,[times,4])
+startthread($printtest,[times,4])
+startthread($printtest,[times,4])
+startthread($printtest,[times,4])
+startthread($printtest,[times,4])
+while(true)
+/*
+m = manager.this('嚎哭深渊')
+i = 0
+while(i < 1000){
+	m.addstudent('13205150342','拉克丝','法师')
+	//s = student.this('13205150342','拉克丝','法师')
+	i = i + 1
+}
+p = m.s
+count = 0
+
+//对象无法快速实现回收，因为对象中的dict对象无法快速收
