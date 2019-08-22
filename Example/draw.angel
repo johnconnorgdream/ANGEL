@@ -1,0 +1,30 @@
+draw(width,height)
+{
+	for(i in 0~width-1)
+	{
+		print('#')
+	}
+	print('\n')
+	for(i in 0~height-1)
+	{
+		for(j in 0~height-1)
+		{
+			if(j == 0)
+				print('#')
+			print(' ')
+			if(j == width-1)
+				print('#')
+		}
+		print('\n')
+	}
+	for(i in 0~width-1)
+	{
+		print('#')
+	}
+	print('\n')
+}
+
+//adddependence
+for(i = 0; i < 10; i++)
+	draw(20,20)
+a = i
