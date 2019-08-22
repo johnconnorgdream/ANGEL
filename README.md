@@ -9,7 +9,8 @@
 目前支持windows环境，编译环境vs2010
 
 编译：
-用vs2010打开angel3.vcxproj并build上面两个项目，输出文件在项目根目录下的Debug文件夹
+用vs2010打开angel3.vcxproj并build上面两个项目，输出文件在项目根目录下的Debug文件夹下的Angel.dll和angel5.exe
+
 运行命令是
 angel5 [-sh/-c] [angel脚本文件名] -sh运行后进入交互，-c表示只编译生成字节码
 
