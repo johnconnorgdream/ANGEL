@@ -7,9 +7,17 @@
 本项目由c语言编写，目前只支持windows32/64位系统
 
 ## 项目结构：
-1、AngelRunner：angel脚本运行引擎
+### AngelRunner：
 
-2、angel3：angel脚本运行时环境，主要分成引擎核心（AngelCore）、语言扩展（Extension）、对象（Object)和工具（Tools）
+angel脚本运行入口
+
+### angel3 angel脚本运行时环境，主要分成引擎核心（AngelCore）、语言扩展（Extension）、对象（Object)和工具（Tools）
+
+AngelCore：包括编译器（词法语法分析器，生成字节码，angel.cpp）、虚拟机（执行字节码引擎，支持多线程，execute.cpp）、内存管理和GC（包括block和page内存模型，引用计数和可达性分析结合的GC算法）
+
+Extension：语言扩展，目前只做了开头工作（文件系统fs、网络socket、xml解析器xml、正则引擎（有Bug）Object/a_re.cpp、线程thread、时间time）
+
+Object：支持整形、浮点型、字符串类型、列表（线性表）、集合（HashSet）、字典、范围类型
 
 ## 编译环境：
 vs2010 用vs2010打开angel3.vcxproj并build上面两个项目（右击build），输出文件在项目根目录下的Debug文件夹下的Angel.dll和angel5.exe
