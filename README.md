@@ -7,8 +7,9 @@
 本项目由c语言编写，目前只支持windows32/64位系统
 
 ## 项目结构：
-### 1、AngelRunner：angel脚本运行引擎
-### 2、angel3：angel脚本运行时环境，主要分成引擎核心（AngelCore）、语言扩展（Extension）、对象（Object)和工具（Tools）
+1、AngelRunner：angel脚本运行引擎
+
+2、angel3：angel脚本运行时环境，主要分成引擎核心（AngelCore）、语言扩展（Extension）、对象（Object)和工具（Tools）
 
 ## 编译环境：
 vs2010 用vs2010打开angel3.vcxproj并build上面两个项目（右击build），输出文件在项目根目录下的Debug文件夹下的Angel.dll和angel5.exe
