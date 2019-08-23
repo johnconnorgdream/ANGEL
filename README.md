@@ -17,8 +17,11 @@ vs2010 用vs2010打开angel3.vcxproj并build上面两个项目（右击build）�
 
 
 ## 运行测试
-angel5 [-sh/-c] [angel脚本文件名的全路径] -sh运行后进入交互，-c表示只编译生成字节码不运行，进入shell交互界面可以查看文件中全局变量的值，同时-code可以查看编译的字节码（有些bug）
-比如：
+angel5 [-sh/-c] [angel脚本文件名的全路径] -sh运行后进入交互，-c表示只编译生成字节码不运行。
+
+进入shell交互界面可以查看文件中全局变量的值，同时-code可以查看编译的字节码（有些bug）
+
+例子如下：
 angel -sh/-c G:\Youku Files\ANGEL\Example\test.angel
 
 ## 编写ANGEL脚本
