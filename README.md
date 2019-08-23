@@ -21,8 +21,10 @@ angel5 [-sh/-c] [angel脚本文件名的全路径] -sh运行后进入交互，-c
 
 进入shell交互界面可以查看文件中全局变量的值，同时-code可以查看编译的字节码（有些bug）
 
+
 例子如下：
 angel G:\Youku Files\ANGEL\Example\test.angel
+**方便起见一般将常用的路径放在angel.dir中，以后命令直接用文件名：angel test.angel**
 
 ## 编写ANGEL脚本
 具体的例子在example，angel语言语法简洁，易于上手，例子中提供了一些虚拟机的测试脚本和一些经典算法的实现。
