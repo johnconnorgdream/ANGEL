@@ -11,7 +11,9 @@
 
 angel脚本运行入口
 
-### angel3 angel脚本运行时环境，主要分成引擎核心（AngelCore）、语言扩展（Extension）、对象（Object)和工具（Tools）
+### angel3：
+
+脚本运行时环境，主要分成引擎核心（AngelCore）、语言扩展（Extension）、对象（Object)和工具（Tools）
 
 AngelCore：包括编译器（词法语法分析器，生成字节码，angel.cpp）、虚拟机（执行字节码引擎，支持多线程，execute.cpp）、内存管理和GC（包括block和page内存模型，引用计数和可达性分析结合的GC算法）
 
