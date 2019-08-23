@@ -1,30 +1,36 @@
-﻿
-i=0
+﻿i=0
 s = socket('tcp')
-bind(s,['192.168.1.100',3300])
+bind(s,['192.168.1.103',3300])
 listen(s,10)
 from = []
 ss = accept(s,from)
-print('连接到'+from[0]+' : '+from[1])
-sleep(1000)
-send(ss,'2332'*10000)
-startthread((s){
-	while(true)
-	{
-		content = recv(s)
-		if(content == null)
-			break
-		else
-			printl(content)
-	}
-},[ss])
-while(true){
-	sc = scan()
-	res = send(ss,sc)
-	if(!res)
-		break 
+if(!ss)
+{
+	print('连接出错退出！')
 }
-sclose(s)
+else{
+	print('连接到'+from[0]+' : '+from[1])
+	sleep(1000)
+	send(ss,'2332'*10000)
+	startthread((s){
+		while(true)
+		{
+			content = recv(s)
+			if(content == null)
+				break
+			else
+				printl(content)
+		}
+	},[ss])
+	while(true){
+		sc = scan()
+		res = send(ss,sc)
+		if(!res)
+			break 
+	}
+	sclose(s)
+}
+
 
 /*
 
