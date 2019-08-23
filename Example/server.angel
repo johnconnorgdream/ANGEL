@@ -1,6 +1,6 @@
 ﻿i=0
 s = socket('tcp')
-bind(s,['192.168.1.103',3300])
+bind(s,['172.21.220.183',3300])
 listen(s,10)
 from = []
 ss = accept(s,from)

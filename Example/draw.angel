@@ -27,3 +27,38 @@ draw(width,height)
 //adddependence
 for(i = 0; i < 100; i++)
 	draw(20,20)
+
+/*
+class Solution {
+public:
+    ListNode *insertionSortList(ListNode *head) {
+        ListNode *pre = head;
+        ListNode *p = pre->next;
+        ListNode *q = head;
+        ListNode res(0);
+        res.next = head;
+        if(!head || !head->next)
+            return res.head;
+        while(p != NULL){
+            while(q->next != p)
+            {
+                if(p->val < q->next->val){
+                    ListNode *tmp = p;
+                    p = p->next; //scan++
+                    pre->next = p;
+                    tmp->next = q->next;
+                    q->next = tmp;
+                    break ;
+                }
+                q = q->next;
+            }
+            if(q->next == p)
+            {
+                pre = p;
+                p = pre->next;
+            }
+            q = head;
+        }
+        return res.next;
+    }
+};

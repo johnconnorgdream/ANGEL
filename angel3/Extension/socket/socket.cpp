@@ -73,6 +73,7 @@ int getsockaddr(sockaddr_in *addr,object host)
 }
 object syssocket(object protocol)
 {
+	//可扩展创建非/阻塞模式
 	int type;
 	object_socket res = (object_socket)initext(APPLYSIZE(sizeof(object_socketnode)));
 	res->_type = socket_type;
@@ -204,15 +205,22 @@ object sysrecv(object s)
 }
 object syssend(object s,object content)
 {
-	int ret ;
+	int ret,sendsize;
 	ARG_CHECK(s,SOCKET,"send",1);
 	ARG_CHECK(content,STR,"send",2);
-
-	ret = send(GETSOCKET(s)->s,GETSTR(content)->s,GETSTR(content)->len,0);
-	if(ret < 0)
-		return GETFALSE;
-	else
-		return GETTRUE;
+	int totallen = GETSTR(content)->len;
+	while(1){
+		sendsize = send(GETSOCKET(s)->s,GETSTR(content)->s,GETSTR(content)->len,0);
+		if(sendsize < 0)
+			return GETFALSE;
+		else
+		{
+			ret += sendsize;
+			if(ret >= totallen)
+				break ;
+		}
+	}
+	return GETTRUE;
 }
 object syssclose(object s)
 {
