@@ -31,7 +31,12 @@ extern funlist global_function;
 
 
 
-
+void *popcollection(collection c)
+{
+	if(c->size == 0)
+		return 0;
+	return c->element[--c->size];
+}
 collection initcollection(int count)
 {
 	collection c=(collection)malloc(sizeof(collectionnode));

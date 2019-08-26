@@ -14,7 +14,6 @@ object_dict initdictionary(int count)
 	res->hashtable = (object_entry *)angel_alloc_page((object)res,count * sizeof(object_entry));
 	memset(res->hashtable,0,count*sizeof(object));
 	res->len = 0;
-
 	return res;
 }
 void resizedict(object_dict od)

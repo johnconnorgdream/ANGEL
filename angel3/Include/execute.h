@@ -82,6 +82,7 @@ inline void decref(object o)
 #define _DECREF(o) decref((object)o);
 #define DECREF(o) if(o) {_DECREF(o)}//if(o->refcount == FLAG_FLAGCLEAN) o->refcount = 0;
 #define ASCREF(o) if(o) (o)->refcount++;
+
 __forceinline int getmax(int a,int b)
 {
 	return a > b ? a : b;

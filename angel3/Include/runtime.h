@@ -128,6 +128,8 @@ void freeenv(env ev);
 object_entry initentry(object key,object value);
 
 
+
+void *popcollection(collection c);
 collection initcollection(int count = list_base_size);
 void addcollection(collection base,void *el);
 void clearcollection(collection c);

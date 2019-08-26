@@ -36,6 +36,7 @@ towide是转化为同意的宽字符unicode，tomult是转化为统一的utf-8，然后在输出的时候转
 */
 
 static angel_memry angel_object_heap,angel_data_heap;
+static collection angel_traversal_stack;
 static block free_block;
 object_string charset[cellnum];  //这里是英文的字符池和字节池
 object_bytes byteset[cellnum];
@@ -90,6 +91,7 @@ void addfield(angel_memry am,field f)
 /*
 
 初始化堆内存
+
 */
 void lock_const_sector()
 {
@@ -200,6 +202,7 @@ void init_heap()
 	free_block = (block)calloc(1,sizeof(blocknode));
 	angel_object_heap = init_block_heap();
 	angel_data_heap = init_page_heap();
+	angel_traversal_stack = initcollection();
 }
 void free_field(field f)
 {
@@ -276,13 +279,109 @@ void reset_heap()
 内存的申请与释放
 */
 
-#define CALLABLE(o) (o->refcount == 0)
-inline int callable(object o,int mode)
+object angel_alloc_block(int tsize)  //争取所有的对象大小都在16字节以内，当然字符串和列表除外
 {
-	if(mode == 1)
-		return !ISFLAGED(o);
-	return o->refcount == 0;
+	object o;
+	block p,pre;
+	MEM_LOCK
+alloc:
+	for(pre=free_block,p=pre->next; p; pre=p,p=p->next)
+	{
+		//对于大对象第一次可能耗时较长
+		int left = p->block_size-tsize;
+		block old;
+		if(left >= 0)  
+		{
+			o = (object)((char *)p+left);
+			if(left < MINSIZE)
+			{
+				pre->next = p->next;
+				*(char *)p = left; //很大胆的尝试，即要求一定要在字节表达允许范围内
+			}
+			else
+				p->block_size = left;
+			*(int *)o = 0;
+			o->type = DRIFT_SIZE;
+			o->refcount = 1;  //注意这里开始初始化为1
+			o->osize = tsize;
+
+			MEM_UNLOCK
+			return o;
+		}
+	}
+	//表明此时没有符合要求的
+	block_gc();
+	goto alloc;
 }
+void* angel_alloc_page(object head,int len)								
+{
+#define HUGE_SIZE 5
+	page res;
+	int allocsize = len + data_head;
+	MEM_LOCK
+	if(allocsize > max_page_size/2)  //巨大的内存申请
+	{
+		if(angel_data_heap->extend_size > max_page_size*20)
+			page_extend_gc(); 
+		field f = init_page_field(allocsize);
+		res = (page)f->memry;
+		addextendfield(angel_data_heap,f,allocsize);
+		res->ref = head;
+		
+		MEM_UNLOCK
+		return (void *)(res+1);
+	}
+alloc:
+	ASCREF(head);
+	for(field f = angel_data_heap->field_head; f; f = f->next)
+	{
+		if(f->flag == 1) continue ;
+		if(f->free_size > allocsize) //第一次够分
+		{
+			//这里的申请是从前向后的的
+			res = (page)((char *)f->memry+f->alloc_ptr);
+			res->page_size = allocsize;
+			res->ref = head;
+			f->alloc_ptr += allocsize;
+			f->free_size -= allocsize;
+
+			
+			DECREF(head);
+			
+			MEM_UNLOCK
+
+			return (void *)(res+1);
+		}
+	}
+	//开始垃圾回收
+	page_gc();
+	goto alloc;
+}
+
+
+
+
+void sys_realloc_list(object_list l,int resize)
+{
+	void *addr = l->item;
+	angel_free_page(addr);
+	l->item = (object *)malloc(sizeof(object)*resize);
+}
+object initext(int size)
+{
+	object ext = angel_alloc_block(size);
+	ext->type = EXT_TYPE;
+	return ext;
+}
+
+
+
+
+/*
+
+垃圾回收
+*/
+
 __forceinline void dec_element(object p,int mode = 0)
 {
 	//任何一个对象在满足gc条件是都应该调用dec_element
@@ -380,10 +479,8 @@ __forceinline void dec_element(object p,int mode = 0)
 		DECFIX(GETDICT(p)->hashtable);
 		return ;
 	case OBJECT:
-		p->mem_value->refcount = 0;
-		dec_element((object)p->mem_value);
-		p->pri_mem_value->refcount = 0;
-		dec_element((object)p->pri_mem_value);
+		DEEP_DECREF((object)p->mem_value);
+		DEEP_DECREF((object)p->pri_mem_value);
 		return ;
 	case EXT_TYPE:
 		ext = (object_ext)p;
@@ -395,387 +492,163 @@ __forceinline void dec_element(object p,int mode = 0)
 		return ;
 	}
 }
-void free_extend_page()
+void traversal_root(void (*deal)(object o,int mode),int mode = 0)
 {
-	field pre = angel_data_heap->extend_head,p = pre->next;
-	while(p)
+	int i;
+	for(i = global_value_list->alloc_size; i<global_value_list->len; i++){
+		deal(global_value_list->item[i],mode);
+	}
+	for(linkcollection p = angel_stack_list->next; p != angel_stack_list; p = p->next)
 	{
-		object test = ((page)p->memry)->ref;
-		if(test)  //超大快的内存极少使用，所以一旦回收可以立即释放
-		{
-			if(CALLABLE(test))
-			{
-				dec_element(test);
-				goto _free_big;
-			}
-		}
-		else
-		{
-_free_big:
-			field temp = p;
-			angel_data_heap->total_size -= temp->free_size;
-			angel_data_heap->extend_size -= temp->free_size;
-			p = temp->next;
-			pre->next = p;
-			free(temp->memry);
-			free(temp);
-			continue ;
-		}
-		pre = p;
-		p = pre->next;
+		runtime_stack stack = ((runable)p->data)->_stack;
+		if(!stack) continue;
+		for(int j = 0; j<stack->push_pos+1; j++)
+			deal(stack->data[j],mode);
 	}
 }
-object angel_alloc_block(int tsize)  //争取所有的对象大小都在16字节以内，当然字符串和列表除外
+void deal_deep(object o,int (*deal)(object o))  //deal返回是否可以递归
 {
-	object o;
-	block p,pre;
-	MEM_LOCK
-alloc:
-	for(pre=free_block,p=pre->next; p; pre=p,p=p->next)
-	{
-		//对于大对象第一次可能耗时较长
-		int left = p->block_size-tsize;
-		block old;
-		if(left >= 0)  
-		{
-			o = (object)((char *)p+left);
-			if(left < MINSIZE)
-			{
-				pre->next = p->next;
-				*(char *)p = left; //很大胆的尝试，即要求一定要在字节表达允许范围内
-			}
-			else
-				p->block_size = left;
-			*(int *)o = 0;
-			o->type = DRIFT_SIZE;
-			o->refcount = 1;  //注意这里开始初始化为1
-			o->osize = tsize;
+	//注意本内存系统的引用计数加减与回收分两个不同阶段做
+#define PUSHIT(o) do{ if(o) addcollection(angel_traversal_stack,o); }while(0);
+#define POPIT do{p = (object)popcollection(angel_traversal_stack); if(!p) return ;}while(0);
 
-			MEM_UNLOCK
-			return o;
-		}
-	}
-	//表明此时没有符合要求的
-	block_gc();
-	goto alloc;
-}
-void* angel_alloc_page(object head,int len)								
-{
-#define HUGE_SIZE 5
-	page res;
-	int allocsize = len + data_head;
-	MEM_LOCK
-	if(allocsize > max_page_size/2)  //巨大的内存申请
+
+	object p;
+	PUSHIT(o)
+	while(1)
 	{
-		if(angel_data_heap->extend_size > max_page_size*20)
-			page_extend_gc(); 
-		field f = init_page_field(allocsize);
-		res = (page)f->memry;
-		addextendfield(angel_data_heap,f,allocsize);
-		res->ref = head;
+		POPIT
 		
-		MEM_UNLOCK
-		return (void *)(res+1);
-	}
-alloc:
-	ASCREF(head);
-	for(field f = angel_data_heap->field_head; f; f = f->next)
-	{
-		if(f->flag == 1) continue ;
-		if(f->free_size > allocsize) //第一次够分
+		if(!deal(p))
+			continue ;
+
+		switch(p->type)
 		{
-			//这里的申请是从前向后的的
-			res = (page)((char *)f->memry+f->alloc_ptr);
-			res->page_size = allocsize;
-			res->ref = head;
-			f->alloc_ptr += allocsize;
-			f->free_size -= allocsize;
-
-			
-			DECREF(head);
-			
-			MEM_UNLOCK
-
-			return (void *)(res+1);
+		case NOTYPE:
+		case FUNP:
+		case INT:
+		case FLOAT:
+		case NU:
+		case TRUE:
+		case FALSE:
+		case BOOLEAN:
+		case STR:
+			break ;
+		case ITERATOR:
+			PUSHIT(GETITER(p)->base);
+			break ;
+		case SLICE:
+			PUSHIT(GETSLICE(p)->base);
+			PUSHIT(GETSLICE(p)->range);
+			break ;
+		case ENTRY:
+			PUSHIT(GETENTRY(p)->key);
+			PUSHIT(GETENTRY(p)->value);
+			break ;
+		case LIST:
+			for(int i = 0; i<GETLIST(p)->len; i++)
+			{
+				object item = GETLIST(p)->item[i];
+				if(item)
+				{
+					PUSHIT(item);
+				}
+			}
+			break ;
+		case SET:
+			for(int i = 0; i<GETSET(p)->alloc_size; i++)
+			{
+				object item = GETSET(p)->element[i];
+				if(item)
+				{
+					PUSHIT(item);
+				}
+			}
+			break ;
+		case DICT:
+			for(int i = 0; i<GETDICT(p)->alloc_size; i++)
+			{
+				object_entry entry = GETDICT(p)->hashtable[i];
+				if(entry)
+				{
+					PUSHIT((object)entry);
+				}
+			}
+			break ;
+		case OBJECT:
+			PUSHIT(o->mem_value);
+			PUSHIT(o->pri_mem_value);
+			break ;
+		default:
+			//可以针对拓展对象的析构函数进行
+			break ;
 		}
 	}
-	//开始垃圾回收
-	page_gc();
-	goto alloc;
 }
-
-
-void sys_realloc_list(object_list l,int resize)
-{
-	void *addr = l->item;
-	angel_free_page(addr);
-	l->item = (object *)malloc(sizeof(object)*resize);
-}
-object initext(int size)
-{
-	object ext = angel_alloc_block(size);
-	ext->type = EXT_TYPE;
-	return ext;
-}
-/*
-
-垃圾回收
-*/
 #define GETPAGE(base,i) (page)((char *)base+i)
 #define ISDRIFT(b) (TEST_O(b)->type < DRIFT_SIZE)
-inline void flag(object o)
+inline void _flag(object o)
 {
 	ASCREF(o);
 }
-void deep_flag(object p)
+int deep_flag(object p)
 
 {
-#define FLAG_EXTRA(o) o->extra_flag = IS_FLAGED;
 	//注意本内存系统的引用计数加减与回收分两个不同阶段做
-	if(!p)return ;
 	if(!ISFLAGED(p))
-		return ;
-	switch(p->type)
-	{
-	case NOTYPE:
-	case FUNP:
-	case INT:
-	case FLOAT:
-	case NU:
-	case TRUE:
-	case FALSE:
-	case BOOLEAN:
-	case STR:
-	case OBJECT:
-		break ;
-	case ITERATOR:
-		FLAG_EXTRA(GETITER(p)->base);
-		break ;
-	case SLICE:
-		FLAG_EXTRA(GETSLICE(p)->base);
-		FLAG_EXTRA(GETSLICE(p)->range);
-		break ;
-	case ENTRY:
-		FLAG_EXTRA(GETENTRY(p)->key);
-		FLAG_EXTRA(GETENTRY(p)->value);
-		break ;
-	case LIST:
-		for(int i = 0; i<GETLIST(p)->len; i++)
-		{
-			object item = GETLIST(p)->item[i];
-			if(item)
-			{
-				deep_flag(item);
-			}
-		}
-		break ;
-	case SET:
-		for(int i = 0; i<GETSET(p)->alloc_size; i++)
-		{
-			object item = GETSET(p)->element[i];
-			if(item)
-			{
-				deep_flag(item);
-			}
-		}
-		break ;
-	case DICT:
-		for(int i = 0; i<GETDICT(p)->alloc_size; i++)
-		{
-			object_entry entry = GETDICT(p)->hashtable[i];
-			if(entry)
-			{
-				deep_flag((object)entry);
-			}
-		}
-		break ;
-	default:
-		//可以针对拓展对象的析构函数进行
-		break ;
-	}
-	FLAG_EXTRA(p);
+		return 0;
+	p->extra_flag = IS_FLAGED;
+	return 1;
 }
 void flag(object o,int mode)
 {
 	if(!o)
 		return ;
 	if(mode == 0)
-		flag(o);
+		_flag(o);
 	else
-		deep_flag(o);
+		deal_deep(o,deep_flag);
 }
 void angel_flag(int mode)  //即判断是否是当前的
 {
-	int i;
-	object o,pre;
 	//应该又对一些系统的列表进行标记
-
-	for(i = global_value_list->alloc_size; i<global_value_list->len; i++){
-		flag(global_value_list->item[i],mode);
-	}
-	for(linkcollection p = angel_stack_list->next; p != angel_stack_list; p = p->next)
-	{
-		runtime_stack stack = ((runable)p->data)->_stack;
-		if(!stack) continue;
-		for(int j = 0; j<stack->push_pos+1; j++)
-			flag(stack->data[j],mode);
-	}
+	traversal_root(flag,mode);
 }
-inline void recovery_angel(object o)
+inline void _recovery_angel(object o)
 {
 	DECREF(o);
 }
-void deep_recovery_angel(object p)
+int deep_recovery_angel(object o)
 {
 #define RECOVERY_EXTRA(o) o->extra_flag = 0;
-	//注意本内存系统的引用计数加减与回收分两个不同阶段做
-	if(!p)return ;
-	if(!ISFLAGED(p))
-		return ;
-	switch(p->type)
-	{
-	case NOTYPE:
-	case FUNP:
-	case INT:
-	case FLOAT:
-	case NU:
-	case TRUE:
-	case FALSE:
-	case BOOLEAN:
-	case STR:
-	case OBJECT:
-		break ;
-	case ITERATOR:
-		RECOVERY_EXTRA(GETITER(p)->base);
-		break ;
-	case SLICE:
-		RECOVERY_EXTRA(GETSLICE(p)->base);
-		RECOVERY_EXTRA(GETSLICE(p)->range);
-		break ;
-	case ENTRY:
-		RECOVERY_EXTRA(GETENTRY(p)->key);
-		RECOVERY_EXTRA(GETENTRY(p)->value);
-		break ;
-	case LIST:
-		for(int i = 0; i<GETLIST(p)->len; i++)
-		{
-			object item = GETLIST(p)->item[i];
-			deep_recovery_angel(item);
-		}
-		break ;
-	case SET:
-		for(int i = 0; i<GETSET(p)->alloc_size; i++)
-		{
-			object item = GETSET(p)->element[i];
-			if(item)
-			{
-				deep_recovery_angel(item);
-			}
-		}
-		break ;
-	case DICT:
-		for(int i = 0; i<GETDICT(p)->alloc_size; i++)
-		{
-			object_entry entry = GETDICT(p)->hashtable[i];
-			if(entry)
-			{
-				deep_recovery_angel((object)entry);
-			}
-		}
-		break ;
-	case EXT_TYPE:
-		 
-	default:
-		//可以针对拓展对象的析构函数进行
-		break ;
-	}
-	RECOVERY_EXTRA(p);
+	if(!ISFLAGED(o))
+		return 0;
+	o->extra_flag = 0;
+	return 1;
 }
 void recovery_angel(object o,int mode)
 {
 	if(!o)
 		return ;
 	if(mode == 0)
-		recovery_angel(o);
+		_recovery_angel(o);
 	else
-		deep_recovery_angel(o);
+		deal_deep(o,deep_recovery_angel);
 }
 void recovery_angel_flag(int mode)  //即判断是否是当前的
 {
-	int i;
-	object o,pre;
-	//应该又对一些系统的列表进行标记
-
-	for(i = global_value_list->alloc_size; i<global_value_list->len; i++)
-		recovery_angel(global_value_list->item[i],mode);
-	for(linkcollection p = angel_stack_list->next; p != angel_stack_list; p = p->next)
-	{
-		runtime_stack stack = ((runable)p->data)->_stack;
-		if(!stack) continue;
-		for(int j = 0; j<stack->top+1; j++)
-			recovery_angel(stack->data[j],mode);
-	}
+	traversal_root(recovery_angel,mode);
 }
-inline void flag_page(object o)  //其本质上就是选择性的对对象标记
+
+int block_gc_count= 0;
+inline int callable(object o,int mode)
 {
-	if(!o) return ;
-	if(IS_GC_REFCOUNT_WAY(o))
-	{
-		ASCREF(o);
-	}
+	if(mode == 1)
+		return !ISFLAGED(o);
+	return o->refcount == 0;
 }
-void angel_flag_page()
-{
-	int i;
-	object o,pre;
-	//应该又对一些系统的列表进行标记
-
-	for(i = global_value_list->alloc_size; i<global_value_list->len; i++)
-		flag_page(global_value_list->item[i]);
-	for(linkcollection p = angel_stack_list->next; p != angel_stack_list; p = p->next)
-	{
-		runtime_stack stack = ((runable)p->data)->_stack;
-		if(!stack) continue;
-		for(int j = 0; j<stack->push_pos+1; j++)
-			flag_page(stack->data[j]);
-	}
-}
-static void recovery_page(object o)
-{
-	if(!o) return ;
-	if(IS_GC_REFCOUNT_WAY(o))
-	{
-		DECREF(o);
-	}
-}
-void recovery_page_flag()  //即判断是否是当前的
-{
-	int i;
-	object o,pre;
-	//应该又对一些系统的列表进行标记
-
-	for(i = global_value_list->alloc_size; i<global_value_list->len; i++)
-		recovery_page(global_value_list->item[i]);
-	for(linkcollection p = angel_stack_list->next; p != angel_stack_list; p = p->next)
-	{
-		runtime_stack stack = ((runable)p->data)->_stack;
-		if(!stack) continue;
-		for(int j = 0; j<stack->top+1; j++)
-			recovery_page(stack->data[j]);
-	}
-}
-
-typedef struct check_pagenode{
-	int size;
-	char type,flag,extra_flag;
-	char refcount;
-}check_page;
-
-int count2 = 0;
-block g_block;
 void select_free_block(field scan,int mode)
 {
-	count2 = 0;
 #define PRE_DEC_ELEMENT(o) dec_element(o,mode);
 	free_block->next = NULL;
 	page prepage;
@@ -832,6 +705,111 @@ recycle:
 		angel_object_heap->field_current = f;
 	}
 }
+void gc_with_mode(field scan_field,int mode)
+{
+	stopworld();
+
+	//这里要让flag与recover的空间是一样的
+	angel_flag(mode);
+	
+	//merge_page(FLAG_FLAGCLEAN);
+	select_free_block(scan_field,mode);  //选择性处理，scan_field是处理的起点,这个过程中也可以dec_element
+	
+	recovery_angel_flag(mode);
+
+	goahead();
+}
+
+void block_gc()
+{
+#define IS_GLOBAL_FLAG(heap_count) (((heap_count & (heap_count-1)) == 0) && heap_count > 4)
+#define STEP_SMALL 1/2
+#define STEP_BIG 3/5
+	angel_object_heap->free_size = 0;
+	field scan_field;
+	scan_field = angel_object_heap->field_current;
+	int flag_mode = 0;
+	int field_count = angel_object_heap->field_count;
+	field oldcur = angel_object_heap->field_current;
+
+	if(IS_GLOBAL_FLAG(field_count))//需要进行全局gc
+	{
+		block_gc_count = 0; //可达性分析还是有bug
+		//flag_mode = 1;
+	}
+
+	gc_with_mode(scan_field,flag_mode);
+
+	int freesize = angel_object_heap->free_size,totalsize;
+	if(oldcur == angel_object_heap->field_head)
+	{
+		totalsize = angel_object_heap->total_size;
+	}
+	else
+		totalsize = max_block_size;
+	//对象内存永远都不会合并，只会做空闲列表，实在不行就申请新的空间，申请新的空间不行再考虑非对象内存（即对非对象内存进行回收，如果再不行就GG）
+	
+	
+	if(angel_object_heap->flag == CYCLE_GC_FLAG)
+	{
+		if(freesize < totalsize*STEP_SMALL)  //一次周期gc之后还是很多垃圾
+		{
+			angel_object_heap->flag = 0;
+			goto addfield;
+		}
+		else if(freesize < totalsize * STEP_BIG)
+		{
+			angel_object_heap->flag = 0;
+		}
+		else
+		{
+			//一次CYCLE_GC回收的垃圾很多，下一次可以再用一次CYCLE_GC_FLAG
+			goto cycle_gc;
+		}
+	}
+	if(freesize < totalsize * STEP_SMALL)  //表示此时不在
+	{
+addfield:
+		//开始开辟新的内存空间并将原来的淘汰掉
+		field f = init_block_field();
+		addfield(angel_object_heap,f);
+		if(angel_data_heap->field_count % 5 == 0)
+		{
+cycle_gc:
+			angel_object_heap->flag = CYCLE_GC_FLAG;
+			angel_object_heap->field_current = angel_object_heap->field_head;
+		}
+	}
+}
+
+
+
+void flag_page(object o,int mode)  //其本质上就是选择性的对对象标记
+{
+	if(!o) return ;
+	if(IS_GC_REFCOUNT_WAY(o))
+	{
+		ASCREF(o);
+	}
+}
+void angel_flag_page()
+{
+	//应该又对一些系统的列表进行标记
+	traversal_root(flag_page);
+}
+void recovery_page(object o,int mode)
+{
+	if(!o) return ;
+	if(IS_GC_REFCOUNT_WAY(o))
+	{
+		DECREF(o);
+	}
+}
+void recovery_page_flag()  //即判断是否是当前的
+{
+	traversal_root(recovery_page);
+}
+#define CALLABLE(o) (o->refcount == 0)
 inline int _merge(page p,page q)
 {
 	int offset = q->page_size;
@@ -914,22 +892,7 @@ void merge_page()
 {
 	merge_page(angel_data_heap->field_current);
 }
-int block_gc_count= 0;
 int g_test[max_block_size];
-void gc_with_mode(field scan_field,int mode)
-{
-	stopworld();
-
-	//这里要让flag与recover的空间是一样的
-	angel_flag(mode);
-	
-	//merge_page(FLAG_FLAGCLEAN);
-	select_free_block(scan_field,mode);  //选择性处理，scan_field是处理的起点,这个过程中也可以dec_element
-	
-	recovery_angel_flag(mode);
-
-	goahead();
-}
 #define SWAP(i,j) {field temp; temp = base[i]; base[i] = base[j]; base[j] = temp;}
 void ajust(field *base,int index,int size)
 {
@@ -1026,70 +989,6 @@ exit:
 	}
 	return select_count;
 }
-void block_gc()
-{
-#define IS_GLOBAL_FLAG(heap_count) ((heap_count & (heap_count-1) == 0) && heap_count > 4)
-#define STEP_SMALL 1/2
-#define STEP_BIG 3/5
-	angel_object_heap->free_size = 0;
-	field scan_field;
-	scan_field = angel_object_heap->field_current;
-	int flag_mode = 0;
-	int field_count = angel_object_heap->field_count;
-	field oldcur = angel_object_heap->field_current;
-
-	if(IS_GLOBAL_FLAG(field_count))//需要进行全局gc
-	{
-		block_gc_count = 0;
-		flag_mode = 1;
-	}
-
-	gc_with_mode(scan_field,flag_mode);
-
-	int freesize = angel_object_heap->free_size,totalsize;
-	if(oldcur == angel_object_heap->field_head)
-	{
-		totalsize = angel_object_heap->total_size;
-	}
-	else
-		totalsize = max_block_size;
-	//对象内存永远都不会合并，只会做空闲列表，实在不行就申请新的空间，申请新的空间不行再考虑非对象内存（即对非对象内存进行回收，如果再不行就GG）
-	
-	if(field_count % 5 == 0)  //到达周期gc条件
-	{
-		if(angel_object_heap->flag == CYCLE_GC_FLAG)
-		{
-			angel_object_heap->flag = 0;
-			if(freesize < totalsize*STEP_SMALL)  //一次周期gc之后还是很多垃圾
-			{
-				goto addfield;
-			}
-			else if(freesize < totalsize * STEP_BIG)
-			{
-				;
-			}
-			else
-			{
-				angel_object_heap->field_current = angel_object_heap->field_head;
-			}
-		}
-		else
-		{
-			angel_object_heap->field_current = angel_object_heap->field_head;
-			angel_object_heap->flag = CYCLE_GC_FLAG;
-		}
-		return ;
-	}
-	if(freesize < totalsize*STEP_SMALL)  //表示此时不在
-	{
-addfield:
-		//开始开辟新的内存空间并将原来的淘汰掉
-		field f = init_block_field();
-		addfield(angel_object_heap,f);
-		if(angel_data_heap->field_count % 5 == 0)
-			angel_object_heap->field_current = angel_object_heap->field_head;
-	}
-}
 void page_gc()
 {
 #define STEP 1/2
@@ -1138,6 +1037,36 @@ addfield:
 		addfield(angel_data_heap,f);
 		if(angel_data_heap->field_count % 4 == 0)
 			angel_data_heap->field_current = angel_data_heap->field_head;  //初始current指针
+	}
+}
+void free_extend_page()
+{
+	field pre = angel_data_heap->extend_head,p = pre->next;
+	while(p)
+	{
+		object test = ((page)p->memry)->ref;
+		if(test)  //超大快的内存极少使用，所以一旦回收可以立即释放
+		{
+			if(CALLABLE(test))
+			{
+				dec_element(test);
+				goto _free_big;
+			}
+		}
+		else
+		{
+_free_big:
+			field temp = p;
+			angel_data_heap->total_size -= temp->free_size;
+			angel_data_heap->extend_size -= temp->free_size;
+			p = temp->next;
+			pre->next = p;
+			free(temp->memry);
+			free(temp);
+			continue ;
+		}
+		pre = p;
+		p = pre->next;
 	}
 }
 void page_extend_gc()
