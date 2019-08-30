@@ -146,24 +146,28 @@ insertionSortList(l) {
     ret head;
 }
 l = link.this()
-for(i in 1~100000){
-	l.add(1)
-	l.add(5)
-	l.add(3)
-	l.add(4)
-	l.add(8)
-	l.add(2)
-	l.add(1)
-	l.add(0)
-	l.add(1)
-	l.add(5)
-	l.add(3)
-	l.add(4)
-	l.add(8)
-	l.add(2)
-	l.add(1)
-	l.add(0)
+for(i in 1~1600000){
+	l.add(i)
 }
+print(1)
+/*
+
+	l.add(1)
+	l.add(5)
+	l.add(3)
+	l.add(4)
+	l.add(8)
+	l.add(2)
+	l.add(1)
+	l.add(0)
+	l.add(1)
+	l.add(5)
+	l.add(3)
+	l.add(4)
+	l.add(8)
+	l.add(2)
+	l.add(1)
+	l.add(0)
 print('hello')
 l.clear()
 for(i in 1~100000){

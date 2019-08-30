@@ -477,9 +477,10 @@ times = 100
 m = ['a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z']
 l = m * times
 size = m.size()
+print(l.size())
 loopbtree = (){
 	i = 0
-	while(i<100){
+	while(i<1000){
 		bt = btree.this(3)
 		for(item in l) bt.add(item)
 		i = i + 1
