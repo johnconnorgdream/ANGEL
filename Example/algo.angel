@@ -479,17 +479,16 @@ l = m * times
 size = m.size()
 loopbtree = (){
 	i = 0
-	bt = btree.this(3)
-	while(i<1000){
-		for(item in l) bt.add(item)
-		print(1)
+	while(i<100){
 		bt = btree.this(3)
+		for(item in l) bt.add(item)
 		i = i + 1
 	}
 	print('done!')
+	ret bt
 }
-loopbtree()
-while(true);
+bt = loopbtree()
+bt.ls()
 /*
 //bt.ls()
 printl('b树已经建立')

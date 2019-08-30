@@ -528,7 +528,7 @@ void traversal_root(void (*deal)(object o,int mode),int mode = 0)
 			deal(stack->data[j],mode);
 	}
 }
-void deal_deep(object o,int (*deal)(object o),void (*post_deal)(object o) = NULL)  //deal返回是否可以递归
+void deal_deep(object o,int (*deal)(object o))  //deal返回是否可以递归
 {
 	//注意本内存系统的引用计数加减与回收分两个不同阶段做
 #define PUSHIT(o) do{ if(o) addcollection(angel_traversal_stack,o); }while(0);
@@ -605,7 +605,6 @@ void deal_deep(object o,int (*deal)(object o),void (*post_deal)(object o) = NULL
 			//可以针对拓展对象的析构函数进行
 			break ;
 		}
-		if(post_deal) post_deal(p);
 	}
 }
 #define GETPAGE(base,i) (page)((char *)base+i)
@@ -668,14 +667,17 @@ int detect_loop_reference(object o)
 	//一类是申请的中间对象还没来得及挂上引用，还有一种就是循环引用没来得及释放
 	if(ISFLAGED(o))  //不要从这个方向检测了，检测不到循环引用的
 		return 0;
+	if(ISDECED(o))  //如果已经被释放了则不需要再深入了
+		return 0;
+	o->extra_flag <<= 4; //将原来的flag保存到高四位
 	if(ISLOOPED(o) || ISCHECKING(o))  //表示已经标记过了，即形成了环
 	{
-		o->extra_flag = IS_LOOPED;
+		o->extra_flag |= IS_LOOPED;
 		return 0;
 	}
 	else
 	{
-		o->extra_flag = LOOP_CHECK_FLAG;
+		o->extra_flag |= LOOP_CHECK_FLAG;
 	}
 
 	//如果没有产生循环引用的对象标记上去的如何恢复
@@ -686,7 +688,7 @@ int recovery_check_flag_to_normal(object o)
 {
 	//如果checkreferenceloop的对象退出后发现是CHECKING标记则直接将其职位普通标记
 	if(ISCHECKING(o)){
-		o->extra_flag = 0;
+		o->extra_flag >>= 4;
 		return 1;
 	}
 	return 0;
@@ -708,6 +710,7 @@ inline int callable(object o,int mode)
 			return 1;
 		
 		//进行循环引用的检测
+
 		deal_deep(o,detect_loop_reference);
 
 		if(!ISLOOPED(o))  //被标记了
