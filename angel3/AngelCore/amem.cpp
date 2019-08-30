@@ -1,5 +1,6 @@
 #define AMEM_MOUDLE
 
+#include <math.h>
 #include <string.h>
 #include <stdlib.h>
 #include <memory.h>
@@ -18,21 +19,36 @@ towide是转化为同意的宽字符unicode，tomult是转化为统一的utf-8，然后在输出的时候转
 为了效率。全局变量和局部变量都直接用列表（object_list）和额外的映射表(map类型，这只是简单的名字映射)。
 一个做
 
-流式内存的申请分为两类，一类是小数据直接由objectheap申请，大的数据由malloc申请，并将释放的内存放在队列中，队列中的内存块大小以maxsize为基础按照2的倍数不断增加
-如果超过队列的大小则直接free掉。 
-大内存机制与对象内存不同，它不是靠空闲列表申请的，而是直接移动指针，回收时直接合并
-后面可以考虑将数据内存的常量放在一起，以后就不用扫描了。
+内存管理：
+
+对象的内存是利用空闲链表的方式（首次适应算法），因为对象的大小较为固定且大小不大于100B，利用空闲列表较为方便（block模式）。
+字符串和集合的内存机制与对象内存不同，它不是靠空闲列表申请的，而是直接移动指针，回收时直接合并
+后面可以考虑将数据内存的常量放在一起，以后就不用扫描了（page模式）。
+不管时page还是block内存都保存在field结构体中。
 
 
-垃圾回收采用局部扫描的策略，避免频繁的访问，一般情况下值扫描当前最新的field，如果空闲大小达到一定大小则可以对前面的field进行
-扫描，否则逢5个field做一次大的扫描(FULL GC)
-当然page的原理相同
+
+关于GC:
+GC是利用引用计数和可达性分析结合的方法，对于对象和集合类型的赋值利用引用计数的方法（考虑到可达性分析扫描代家太大）
+局部变量和全局变量使用可达性分析方法。
+
+其中对象GC（gc_block）为了检测对象是否存在循环引用（出现在对象和集合类型），本系统将第一轮可达性分析后的对象分为
+已引用对象、游离对象。其中游离对象分为循环引用对象（需要回收）和临时申请对象比如用angel_alloc_block申请的对象还没来得及被
+其他对象引用。
+所以在判断循环引用不能简单的做可达性分析而是利用深度优先遍历找到所有循环引用（见detect_loop_reference，利用LOOP_CHECK_FLAG、IS_LOOPED标记）
+回收callable函数可以根据对象是否标记为IS_LOOPED判断对象是否可以回收。
+detect_loop_reference调用之后如果被判断对象是IS_LOOPED则与其相连的所有除了被可达性分析标记的对象都是IS_LOOPED
+如果被判断的对象没有标记为IS_LOOPED需要将中间的临时标记LOOP_CHECK_FLAG变为正常状态（参考recovery_check_flag_to_normal）
+
+GC策略：
+block模式下的gc与page模式下的gc策略有不同。
+block_gc有三个范围gc：普通gc（只对新增的field进行gc）周期gc（目前是每5次新增field(新增feild的触发条件见gc_block函数)，每次从field_head开始扫描）
+全局gc（全局gc不同于周期gc，他是对所有的对象做可达性分析并配合循环引用的检测），gc回收利用空闲链表
+page_gc有两个范围的gc：普通gc（只对新增的field进行gc）和周期gc（目前是每4次新增field一次，具体同上）
+gc回收利用内存移动，但都是对field内部的内存移动，field之间没有内存移动，所以每次周期gc以后会做一次内存间移动（global_merge）
+如果内存间移动不满足要求就新增field
 
 
-需要处理两类重点的内存转化：一个是栈中间变量到堆变量、一个是常量到堆变量
-用大根堆来计算page的剩余空间并合并
-
-在申请内存和写入引用直接保证有引用计数
 */
 
 static angel_memry angel_object_heap,angel_data_heap;
@@ -63,8 +79,6 @@ angel_memry get_data_heap()
 {
 	return angel_data_heap;
 }
-
-
 
 
 
@@ -386,17 +400,16 @@ __forceinline void dec_element(object p,int mode = 0)
 {
 	//任何一个对象在满足gc条件是都应该调用dec_element
 	//注意本内存系统的引用计数加减与回收分两个不同阶段做
-#define DEEP_DECREF(o) if(0 == --(o)->refcount) dec_element((object)o);
+#define DEEP_DECREF(o) do{ \
+			if(mode != 1){ \
+				if(0 == --(o)->refcount) dec_element((object)o);  \
+			}\
+		}while(0);
 #define DECFIX(addr) ((page)(addr)-1)->ref = NULL;
 	if(!p)return ;
 	char *test = (char *)p;
 	fun fp;
 	object_ext ext;
-	if(mode == 1)
-	{
-		p->refcount = 0;
-		return ;
-	}
 	if(!ISDECED(p))
 		p->extra_flag = IS_DECED;
 	else
@@ -446,34 +459,43 @@ __forceinline void dec_element(object p,int mode = 0)
 		}
 		return ;
 	case LIST:
-		for(int i = 0; i<GETLIST(p)->len; i++)
+		if(mode != 1)
 		{
-			object item = GETLIST(p)->item[i];
-			if(item)
+			for(int i = 0; i<GETLIST(p)->len; i++)
 			{
-				DEEP_DECREF(item);
+				object item = GETLIST(p)->item[i];
+				if(item)
+				{
+					DEEP_DECREF(item);
+				}
 			}
 		}
 		DECFIX(GETLIST(p)->item);
 		return ;
 	case SET:
-		for(int i = 0; i<GETSET(p)->alloc_size; i++)
+		if(mode != 1)
 		{
-			object item = GETSET(p)->element[i];
-			if(item)
+			for(int i = 0; i<GETSET(p)->alloc_size; i++)
 			{
-				DEEP_DECREF(item);
+				object item = GETSET(p)->element[i];
+				if(item)
+				{
+					DEEP_DECREF(item);
+				}
 			}
 		}
 		DECFIX(GETSET(p)->element);
 		return ;
 	case DICT:
-		for(int i = 0; i<GETDICT(p)->alloc_size; i++)
+		if(mode != 1)
 		{
-			object_entry entry = GETDICT(p)->hashtable[i];
-			if(entry)
+			for(int i = 0; i<GETDICT(p)->alloc_size; i++)
 			{
-				DEEP_DECREF(entry);
+				object_entry entry = GETDICT(p)->hashtable[i];
+				if(entry)
+				{
+					DEEP_DECREF(entry);
+				}
 			}
 		}
 		DECFIX(GETDICT(p)->hashtable);
@@ -506,7 +528,7 @@ void traversal_root(void (*deal)(object o,int mode),int mode = 0)
 			deal(stack->data[j],mode);
 	}
 }
-void deal_deep(object o,int (*deal)(object o))  //deal返回是否可以递归
+void deal_deep(object o,int (*deal)(object o),void (*post_deal)(object o) = NULL)  //deal返回是否可以递归
 {
 	//注意本内存系统的引用计数加减与回收分两个不同阶段做
 #define PUSHIT(o) do{ if(o) addcollection(angel_traversal_stack,o); }while(0);
@@ -576,13 +598,14 @@ void deal_deep(object o,int (*deal)(object o))  //deal返回是否可以递归
 			}
 			break ;
 		case OBJECT:
-			PUSHIT(o->mem_value);
-			PUSHIT(o->pri_mem_value);
+			PUSHIT(p->mem_value);
+			PUSHIT(p->pri_mem_value);
 			break ;
 		default:
 			//可以针对拓展对象的析构函数进行
 			break ;
 		}
+		if(post_deal) post_deal(p);
 	}
 }
 #define GETPAGE(base,i) (page)((char *)base+i)
@@ -595,7 +618,7 @@ int deep_flag(object p)
 
 {
 	//注意本内存系统的引用计数加减与回收分两个不同阶段做
-	if(!ISFLAGED(p))
+	if(ISFLAGED(p))
 		return 0;
 	p->extra_flag = IS_FLAGED;
 	return 1;
@@ -620,7 +643,6 @@ inline void _recovery_angel(object o)
 }
 int deep_recovery_angel(object o)
 {
-#define RECOVERY_EXTRA(o) o->extra_flag = 0;
 	if(!ISFLAGED(o))
 		return 0;
 	o->extra_flag = 0;
@@ -639,12 +661,67 @@ void recovery_angel_flag(int mode)  //即判断是否是当前的
 {
 	traversal_root(recovery_angel,mode);
 }
+int detect_loop_reference(object o)
+{
+	
+	//注意，没有被flag的对象有两类，
+	//一类是申请的中间对象还没来得及挂上引用，还有一种就是循环引用没来得及释放
+	if(ISFLAGED(o))  //不要从这个方向检测了，检测不到循环引用的
+		return 0;
+	if(ISLOOPED(o) || ISCHECKING(o))  //表示已经标记过了，即形成了环
+	{
+		o->extra_flag = IS_LOOPED;
+		return 0;
+	}
+	else
+	{
+		o->extra_flag = LOOP_CHECK_FLAG;
+	}
+
+	//如果没有产生循环引用的对象标记上去的如何恢复
+
+	return 1;
+}
+int recovery_check_flag_to_normal(object o)
+{
+	//如果checkreferenceloop的对象退出后发现是CHECKING标记则直接将其职位普通标记
+	if(ISCHECKING(o)){
+		o->extra_flag = 0;
+		return 1;
+	}
+	return 0;
+}
+
 
 int block_gc_count= 0;
 inline int callable(object o,int mode)
 {
 	if(mode == 1)
-		return !ISFLAGED(o);
+	{
+		//注意标记符号将一直保留，因为反正已经被回收了，
+		//另外还可以为其他循环引用对象的回收提供依据
+		if(ISFLAGED(o))
+			return 0;  //一定不被回收
+		//剩下的就是没标记的，所以需要检测是否产生循环引用
+		
+		if(ISLOOPED(o))  //被标记了
+			return 1;
+		
+		//进行循环引用的检测
+		deal_deep(o,detect_loop_reference);
+
+		if(!ISLOOPED(o))  //被标记了
+		{
+			//恢复没有形成环的部分
+			deal_deep(o,recovery_check_flag_to_normal);
+			return 0;
+		}
+		else
+		{
+			return 1;
+		}
+		//检测时否时循环引用
+	}
 	return o->refcount == 0;
 }
 void select_free_block(field scan,int mode)
@@ -720,27 +797,45 @@ void gc_with_mode(field scan_field,int mode)
 	goahead();
 }
 
+#define BLOCK_GC_CYCLE_STEP 5
+inline int is_block_cycle_gc_step()
+{
+	return angel_object_heap->field_count % BLOCK_GC_CYCLE_STEP == 0;
+
+}
+inline int64_t get_heap_size()
+{
+	//后面需要考虑到线程栈的大小
+	return angel_object_heap->total_size + angel_data_heap->total_size;
+}
+inline int is_global_gc_step()
+{
+	int64_t used_size = get_heap_size();
+	int size = angel_object_heap->field_count;
+	if(used_size > 100*1024*1024)  //100M
+		return size % (BLOCK_GC_CYCLE_STEP*BLOCK_GC_CYCLE_STEP) == 0;
+	return ((size - 1) & size) == 0 && size > 4;
+}
 void block_gc()
 {
-#define IS_GLOBAL_FLAG(heap_count) (((heap_count & (heap_count-1)) == 0) && heap_count > 4)
 #define STEP_SMALL 1/2
 #define STEP_BIG 3/5
+
 	angel_object_heap->free_size = 0;
 	field scan_field;
 	scan_field = angel_object_heap->field_current;
 	int flag_mode = 0;
-	int field_count = angel_object_heap->field_count;
 	field oldcur = angel_object_heap->field_current;
 
-	if(IS_GLOBAL_FLAG(field_count))//需要进行全局gc
+	if(angel_object_heap->flag == GLOBAL_GC_FLAG)//需要进行全局gc
 	{
-		block_gc_count = 0; //可达性分析还是有bug
-		//flag_mode = 1;
+		flag_mode = 1;
 	}
 
 	gc_with_mode(scan_field,flag_mode);
 
 	int freesize = angel_object_heap->free_size,totalsize;
+
 	if(oldcur == angel_object_heap->field_head)
 	{
 		totalsize = angel_object_heap->total_size;
@@ -750,7 +845,7 @@ void block_gc()
 	//对象内存永远都不会合并，只会做空闲列表，实在不行就申请新的空间，申请新的空间不行再考虑非对象内存（即对非对象内存进行回收，如果再不行就GG）
 	
 	
-	if(angel_object_heap->flag == CYCLE_GC_FLAG)
+	if(angel_object_heap->flag == CYCLE_GC_FLAG || angel_object_heap->flag == GLOBAL_GC_FLAG)
 	{
 		if(freesize < totalsize*STEP_SMALL)  //一次周期gc之后还是很多垃圾
 		{
@@ -773,7 +868,12 @@ addfield:
 		//开始开辟新的内存空间并将原来的淘汰掉
 		field f = init_block_field();
 		addfield(angel_object_heap,f);
-		if(angel_data_heap->field_count % 5 == 0)
+		if(is_global_gc_step())//需要进行全局gc,全局gc的条件更苛刻一点，所以放在前面，但当需要全局gc时一定不能耽误
+		{
+			angel_object_heap->field_current = angel_object_heap->field_head; //全局GC
+			angel_object_heap->flag = GLOBAL_GC_FLAG;
+		}
+		else if(is_block_cycle_gc_step())
 		{
 cycle_gc:
 			angel_object_heap->flag = CYCLE_GC_FLAG;
@@ -989,6 +1089,12 @@ exit:
 	}
 	return select_count;
 }
+#define PAGE_GC_CYCLE_STEP 4
+inline int is_page_cycle_gc_step()
+{
+	return angel_data_heap->field_count % BLOCK_GC_CYCLE_STEP == 0;
+
+}
 void page_gc()
 {
 #define STEP 1/2
@@ -1006,6 +1112,7 @@ void page_gc()
 
 
 	int freesize = angel_data_heap->free_size,totalsize;
+
 	if(oldcur == angel_data_heap->field_head)
 	{
 		totalsize = angel_data_heap->total_size;
@@ -1016,7 +1123,7 @@ void page_gc()
 	else
 		totalsize = max_page_size;
 
-	if(angel_data_heap->field_count%4 == 0)  //一旦到5的倍数就要增加内存
+	if(angel_data_heap->flag = GLOBAL_GC_FLAG)  //
 	{
 		if(freesize < totalsize*STEP)
 		{
@@ -1035,8 +1142,11 @@ addfield:
 		//开始开辟新的内存空间并将原来的淘汰掉
 		field f = init_page_field();
 		addfield(angel_data_heap,f);
-		if(angel_data_heap->field_count % 4 == 0)
+		if(is_page_cycle_gc_step())
+		{
 			angel_data_heap->field_current = angel_data_heap->field_head;  //初始current指针
+			angel_data_heap->flag = GLOBAL_GC_FLAG;
+		}
 	}
 }
 void free_extend_page()

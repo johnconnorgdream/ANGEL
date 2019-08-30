@@ -3,6 +3,6 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LocalDebuggerCommand>$(SolutionDir)Debug\angel5.exe</LocalDebuggerCommand>
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
-    <LocalDebuggerCommandArguments>angel5 a</LocalDebuggerCommandArguments>
+    <LocalDebuggerCommandArguments>angel5 -sh algotest</LocalDebuggerCommandArguments>
   </PropertyGroup>
 </Project>

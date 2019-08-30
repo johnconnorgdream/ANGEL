@@ -201,11 +201,11 @@ int storeslicelist_asslice(object_list l,object_range targetrange,object_slice s
 		{
 			//需要设置缓冲区
 			object *cache = (object *)calloc(sizeof(object),n);
-			for(int i = 0; i < n; i++) {
+			for (int i = 0; i < n; i++) {
 				int out = b2 + i * step2;
 				cache[i] = GETLIST(base)->item[out];		
 			}
-			for(int j = 0; j < n; j++) {
+			for (int j = 0; j < n; j++) {
 				int in = b1 + j * step1;
 				object temp = cache[j];
 				assign_execute(l->item, in, temp);

@@ -9,10 +9,8 @@ object initobject()
 {
 	object o = angel_alloc_block(APPLYSIZE(sizeof(objectnode)));
 	o->type = OBJECT;
-	ASCREF(o);
-	o->mem_value = init_perpetual_dict();
-	o->pri_mem_value = init_perpetual_dict();//这个当object销毁时再销毁之
-	DECREF(o);
+	o->mem_value = initdictionary();
+	o->pri_mem_value = initdictionary();//这个当object销毁时再销毁之
 	return o;
 }
 

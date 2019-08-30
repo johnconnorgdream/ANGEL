@@ -1,0 +1,174 @@
+lib struct
+matrix = []
+
+//mode == 1 && test->type == 31
+howmany(n){
+	//1,2,3,....n
+	total = 0
+	if(n == 0)
+		ret 0
+	if(n == 1)
+		ret 1
+	for(i in 1~n){
+		total += howmany(n-i)
+	}
+	ret total
+}
+howmany2(n){
+	//1,2,3,....n
+	total = 0
+	if(n == 0)
+		ret 0
+	if(n == 1)
+		ret 1
+	for(i in 1~2){
+		total += howmany(n-i)
+	}
+	ret total
+}
+
+findel(matrix,el){
+	xsize = matrix[0].size()
+	ysize = matrix.size()
+	for(i = 0 i < ysize i++){
+		linemax = matrix[i][xsize-1]
+		if(el > linemax){
+			;
+		}
+		else if(el < linemax){
+			//二分法
+			begin = 0
+			end = xsize - 1;
+			while(begin <= end)
+			{
+				mid = (begin + end)/2
+				printl(i+'\t'+begin+' '+end)
+				if(matrix[i][mid] > el){
+					end = mid-1
+				}
+				else if(matrix[i][mid] < el)
+				{
+					begin = mid+1
+				}
+				else
+					ret [i,mid]
+			}
+			ret [-1,-1]
+		}
+		else
+			ret [i,xsize-1];
+	}
+	ret [-1,-1]
+}
+matrix.add([1,2,3,4,5,6])
+matrix.add([5,6,7,8,9,10])
+matrix.add([7,8,9,11,12,13])
+matrix.add([10,15,16,17,18,19])
+
+
+printmatrixmagic(matrix){
+	xsize = matrix[0].size();
+	ysize = matrix.size();
+	xbegin = 0;
+	xend = xsize-1;
+	ybegin = 0;
+	yend = ysize-1;
+	w = 0;
+	while(xbegin < xend && ybegin < yend)
+	{
+	    for(i = xbegin; i <= xend; i++){
+	       	print(matrix[w][i] + ' ');
+	    }
+	    for(i = ybegin+1; i <= yend; i++){
+	        print(matrix[i][xsize - w - 1] + ' ');
+	    }
+	    for(i = xend-1; i >= xbegin; i--){
+	        print(matrix[ysize - w - 1][i] + ' ');
+	    }
+	    for(i = yend-1; i >= ybegin+1; i--){
+	        print(matrix[i][w] + ' ')
+	    }
+	    w++;
+	    xbegin += w;
+	    xend -= w;
+	    ybegin += w;
+	    yend -= w;
+	}
+}
+
+shortestLen(p){
+    if(!p){
+        ret 0;
+    }
+    h1 = shortestLen(p.left);
+    h2 = shortestLen(p.right);
+    if(h1 > h2)
+        ret h2+1;
+    else
+        ret h1+1;
+}
+run(root) {
+    if(!root.right && !root.left)
+        ret 1;
+    if(!root.right)
+        ret shortestLen(root.left)+1;
+    if(!root.left)
+        ret shortestLen(root.right)+1;
+    ret shortestLen(root);
+}
+insertionSortList(l) {
+	head = l.head
+    pre = head;
+    p = pre.next;
+    q = head;
+    if(!head)
+        ret head;
+    while(p != head){
+        while(q.next != p)
+        {
+            if(p.el < q.next.el){
+                tmp = p;
+                p = p.next; //scan++
+                pre.next = p;
+                tmp.next = q.next;
+                q.next = tmp;
+                break ;
+            }
+            q = q.next;
+        }
+        if(q.next == p)
+        {
+            pre = p;
+            p = pre.next;
+        }
+        q = head;
+    }
+    ret head;
+}
+l = link.this()
+for(i in 1~100000){
+	l.add(1)
+	l.add(5)
+	l.add(3)
+	l.add(4)
+	l.add(8)
+	l.add(2)
+	l.add(1)
+	l.add(0)
+}
+print('hello')
+l.clear()
+for(i in 1~100000){
+	l.add(1)
+	l.add(5)
+	l.add(3)
+	l.add(4)
+	l.add(8)
+	l.add(2)
+	l.add(1)
+	l.add(0)
+}
+//638 58
+print('hello')
+insertionSortList(l)
+l.print()

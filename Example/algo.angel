@@ -38,7 +38,7 @@ addmatrix(a,b)
 		print('矩阵加法的行数必须相同！')
 		ret []
 	}
-	for(i=0 i<a.size() i++)
+	for(i=0 i < a.size() i++)
 	{
 		row=[]
 		for(j=0 j<a[i].size() j++)
@@ -482,6 +482,7 @@ loopbtree = (){
 	bt = btree.this(3)
 	while(i<1000){
 		for(item in l) bt.add(item)
+		print(1)
 		bt = btree.this(3)
 		i = i + 1
 	}

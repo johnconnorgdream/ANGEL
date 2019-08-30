@@ -2121,13 +2121,21 @@ token dealtoken(int flag,int *i,fun f)  //这仅仅是主程序语法产生的语法树。
 				break ;
 		}
 		temp=t[(*i)++];
-		if(flag == 3)
+		if(flag == 3)  //针对switch-case结构
 		{
 			if(temp->id == CASE || temp->id == DEFAULT || temp->id == BBRACKETR)
 				break ;
 		}
-		else if((flag==2) && temp->id==BBRACKETR)
-			break ;
+		else if(temp->id==BBRACKETR)
+		{
+			if(flag == 2)
+				break ;
+			else
+			{
+				angel_error("语句出现多余的}");
+				return NULL;
+			}
+		}
 	}
 	return root;
 }  //处理主程序或代码快的
@@ -2205,6 +2213,9 @@ token grammartree_entry()    //总程序的入口,创建整个语法树
 未来所有的指令都不需要直接编译操作数节点，操作数节点一般都直接做立即数寻址，只有再双元运算情况下才需要将其中一个放到寄存器
 */
 //ISASSIG宏是探测是否为逻辑运算或bool常量，否则一律要用translate进行转化
+
+
+
 void adddynamicname(char *name)
 {
 	uint16_t offset = dynamic_name->len;

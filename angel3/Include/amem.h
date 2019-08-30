@@ -27,14 +27,14 @@ extern "c"{
 #define DRIFT_SIZE NOTYPE
 
 #define CYCLE_GC_FLAG 1
-
+#define GLOBAL_GC_FLAG 2
 
 
 #define ISBUILDINTYPE(o) (((object)o)->type <= REGULAR && ((object)o)->type >= STR)
-#define ISCOLLECTION(o) (((object)o)->type <= SET && ((object)o)->type >= LIST)
+#define ISCOLLECTION(o) (((object)o)->type <= SET && ((object)o)->type >= STR)
 
 
-#define IS_GC_REFCOUNT_WAY(o) (ISBUILDINTYPE(o) || ISOBJECT(o))
+#define IS_GC_REFCOUNT_WAY(o) (ISCOLLECTION(o) || ISOBJECT(o))
 //fraction_max_size的极限是block_bucket_size/2
 typedef struct blocknode{
 	int block_size;
@@ -62,7 +62,6 @@ typedef struct angel_memrynode{
 object angel_alloc_block(int tsize);
 void* angel_alloc_page(object head,int len);
 object initext(int size);
-
 
 
 //对于可变的内存管理，比如字符串和列表的空间申请，我们利用平衡二叉树的方式

@@ -25,18 +25,30 @@ extern "c"{
 
 //之所以用相同的位模式来标记，是因为各自标记的作用于都是暂时性有效，而且各自有效作用的生命周期不会交叉
 #define IS_PRINTED (1)
+
 #define IS_DECED (2)
 //这是针对可达性分析的标志位，注意这个标志位在进行recovery之后就会还原，在gc过程中不会与IS_DECED冲突
-#define IS_FLAGED (3)
 //因为在gc过程中只要遇到IS_FLAGED就不会被GC，自然就用不到
+#define IS_FLAGED (3)
+
+//暂时标记，做循环应用检测
+#define LOOP_CHECK_FLAG (4)
+
+//标记是否是循环引用
+#define IS_LOOPED (5)
+
 
 #define ISFLAGED(o) ((o->extra_flag) == IS_FLAGED)
 #define ISDECED(o) ((o->extra_flag) == IS_DECED)
 #define ISPRINTED(o) ((((object)o)->extra_flag) == IS_PRINTED)
+#define ISCHECKING(o) ((((object)o)->extra_flag) == LOOP_CHECK_FLAG)
+#define ISLOOPED(o) ((((object)o)->extra_flag) == IS_LOOPED)
+
 
 #define STACKTOHEAP(o) o = (object)stacktoheap(o);
 #define stack_heap_size NUMSIZE
 #define GETSTACKHEAPASINT(base,i) (object_int)((char *)base+(i*stack_heap_size))
+
 
 
 typedef struct _switchnode{
