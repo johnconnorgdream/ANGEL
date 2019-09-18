@@ -1105,7 +1105,7 @@ void page_gc()
 	else
 		totalsize = max_page_size;
 
-	if(angel_data_heap->flag = GLOBAL_GC_FLAG)  //
+	if(angel_data_heap->flag == GLOBAL_GC_FLAG)  //
 	{
 		totalsize = angel_data_heap->total_size;
 		int merge_count = global_merge();
