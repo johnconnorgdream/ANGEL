@@ -16,18 +16,17 @@ extern "c"{
 #include "xml/_xmlcompile.h"
 
 
-
 /*
 
 编写ANGEL库函数须知
 如果在库中用到angel_alloc_block申请了内存（当然不同的类型有不同的封装，比如initinteger）
-
-
 */
+
 void initexttype();
 
 
 #ifdef _cplusplus
 }
 #endif
+
 #endif

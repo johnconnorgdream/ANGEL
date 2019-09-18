@@ -27,6 +27,5 @@ void initexttype()
 
 
 	time_type->type_name = "resouce<time>";
-
 	parse_type->type_name = "resouce<parse>";
 }

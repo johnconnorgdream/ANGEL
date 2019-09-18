@@ -12,25 +12,19 @@
 
 /*
 添加一个内部的数据类型首先要定义类型宏，实现析构（代码添加到dec_element中）和deep_flag，deep_recovery_angel，实现其他的
-
 angel语言默认是用utf-8来显示
 towide是转化为同意的宽字符unicode，tomult是转化为统一的utf-8，然后在输出的时候转化为本地编码。
 固定内存（对象）和可变内存（字符串和集合类对象的数据而且是经常需要申请释放的）的管理
 为了效率。全局变量和局部变量都直接用列表（object_list）和额外的映射表(map类型，这只是简单的名字映射)。
 一个做
-
 内存管理：
 对象的内存是利用空闲链表的方式（首次适应算法），因为对象的大小较为固定且大小不大于100B，利用空闲列表较为方便（block模式）。
 字符串和集合的内存机制与对象内存不同，它不是靠空闲列表申请的，而是直接移动指针，回收时直接合并
 后面可以考虑将数据内存的常量放在一起，以后就不用扫描了（page模式）。
 不管时page还是block内存都保存在field结构体中。
-
-
-
 关于GC:
 GC是利用引用计数和可达性分析结合的方法，对于对象和集合类型的赋值利用引用计数的方法（考虑到可达性分析扫描代家太大）
 局部变量和全局变量使用可达性分析方法。
-
 其中对象GC（gc_block）为了检测对象是否存在循环引用（出现在对象和集合类型），本系统将第一轮可达性分析后的对象分为
 已引用对象、游离对象。其中游离对象分为循环引用对象（需要回收）和临时申请对象比如用angel_alloc_block申请的对象还没来得及被
 其他对象引用。
@@ -38,8 +32,6 @@ GC是利用引用计数和可达性分析结合的方法，对于对象和集合类型的赋值利用引用计数的方
 回收callable函数可以根据对象是否标记为IS_LOOPED判断对象是否可以回收。
 detect_loop_reference调用之后如果被判断对象是IS_LOOPED则与其相连的所有除了被可达性分析标记的对象都是IS_LOOPED
 如果被判断的对象没有标记为IS_LOOPED需要将中间的临时标记LOOP_CHECK_FLAG变为正常状态（参考recovery_check_flag_to_normal）
-
-
 GC策略：
 block模式下的gc与page模式下的gc策略有不同。
 block_gc有三个范围gc：普通gc（只对新增的field进行gc）周期gc（目前是每5次新增field(新增feild的触发条件见gc_block函数)，每次从field_head开始扫描）
@@ -47,12 +39,7 @@ block_gc有三个范围gc：普通gc（只对新增的field进行gc）周期gc（目前是每5次新增fiel
 page_gc有两个范围的gc：普通gc（只对新增的field进行gc）和周期gc（目前是每4次新增field一次，具体同上）
 gc回收利用内存移动，但都是对field内部的内存移动，field之间没有内存移动，所以每次周期gc以后会做一次内存间移动（global_merge）
 如果内存间移动不满足要求就新增field
-
-
 未来的对象成员变量不再用字典存储而用数组和set配合使用，同时再字节码中存储索引缓存，防止每次都要向set中搜索索引
-
-
-
 */
 
 static angel_memry angel_object_heap,angel_data_heap;
@@ -107,9 +94,7 @@ void addfield(angel_memry am,field f)
 	am->total_size += max_block_size;
 }
 /*
-
 初始化堆内存
-
 */
 void lock_const_sector()
 {
@@ -293,7 +278,6 @@ void reset_heap()
 
 
 /*
-
 内存的申请与释放
 */
 
@@ -350,7 +334,6 @@ void* angel_alloc_page(object head,int len)
 		return (void *)(res+1);
 	}
 alloc:
-	ASCREF(head);
 	for(field f = angel_data_heap->field_head; f; f = f->next)
 	{
 		if(f->flag == 1) continue ;
@@ -362,12 +345,8 @@ alloc:
 			res->ref = head;
 			f->alloc_ptr += allocsize;
 			f->free_size -= allocsize;
-
-			
-			DECREF(head);
 			
 			MEM_UNLOCK
-
 			return (void *)(res+1);
 		}
 	}
@@ -396,7 +375,6 @@ object initext(int size)
 
 
 /*
-
 垃圾回收
 */
 
@@ -1123,15 +1101,16 @@ void page_gc()
 	if(oldcur == angel_data_heap->field_head)
 	{
 		totalsize = angel_data_heap->total_size;
-		int merge_count = global_merge();
-		if(merge_count < angel_data_heap->field_count*MERGE_STEP)
-			goto addfield;
 	}
 	else
 		totalsize = max_page_size;
 
 	if(angel_data_heap->flag = GLOBAL_GC_FLAG)  //
 	{
+		totalsize = angel_data_heap->total_size;
+		int merge_count = global_merge();
+		if(merge_count < angel_data_heap->field_count*MERGE_STEP)
+			goto addfield;
 		if(freesize < totalsize*STEP)
 		{
 			goto addfield; //大规模的浪费
@@ -1198,7 +1177,6 @@ void page_extend_gc()
 
 
 /*
-
 各个对象的创建
 */
 object_entry initentry(object key,object value)

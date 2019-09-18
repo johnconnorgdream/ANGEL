@@ -13,6 +13,7 @@
 #include "aenv.h"
 
 
+
 //数值也是用记号来表示
 //getvaluebytoken得到的是变量的值而非引用，并且他返回的类型为整形值。
 //因为这里多次调用execord函数。
@@ -24,6 +25,8 @@
 //数据对象只有在使用的时候才放到obj_list,并记录偏移量
 
 /*
+
+
 这里面的obj_list，global_value，funlist，switch_table,name_pool都是支持2个字节寻址如果必要的话未来会考虑用拓展的四字节操作数，前提条件是列表的长度没有超过65535
 其中funlist需要提前将所有重载的函数放在一起，函数映射表中只包含第一个函数的索引
 还有要单独设一个迭代器对象，用于记录列表，集合，或字典迭代的当前状态
@@ -65,13 +68,13 @@ keyword keywordlib[]={{"if",IF},{"while",LOOP},{"continue",CONTINUE},{"break",BR
 
 object_set keytable;
 
-#define VAL_UNDIFINED(error,name) if(!error) \
-					{ \
-						char errorinfo[100]; \
-						sprintf(errorinfo,"变量%s未定义！",name); \
-						angel_error(errorinfo); \
-						return 0; \
-					} 
+#define VAL_UNDIFINED(error,name) do{ \
+									   if(!error) { \
+									   char errorinfo[100]; \
+									   sprintf(errorinfo,"变量%s未定义！",name); \
+									   angel_error(errorinfo); \
+									   return 0; } \
+								  }while(0);
 #define FREEOTSTACK  free(ts); free(os);
 #define ISSENTENCEEND(pos) (t[*pos]->id == END || t[*pos]->id == DOUHAO || t[*pos]->id == endid || (!ISKEYWORD(t[*pos]->id)))
 #define NOTEND(offset) (offset < tokenlen)
@@ -1457,6 +1460,7 @@ newbeg:
 				else
 				{
 					int negative = 0;
+					//处理+/-等单目运算符
 					while(t[*pos]->id == ADD || t[*pos]->id == SUB || t[*pos]->id == SELFADD || t[*pos]->id == SELFSUB)
 					{
 						if(t[*pos]->id == ADD)
@@ -4260,14 +4264,16 @@ int parse_main(token root)
 {
 	int flag;
 	angel_byte=main_byte;
-//	global_value_list->len = global_value_list->len > global_scope->scope_value_num ? global_value_list->len : global_scope->scope_value_num;
+	//global_value_list->len = global_value_list->len > global_scope->scope_value_num ? global_value_list->len : global_scope->scope_value_num;
 	//重置中间变量
 	initangeltemp(0); //为了collection_base
+
 	if(root)
 		flag=parse_grammar(root->first,0);
 	else
 		return 0;
 	ADDBYTE(_end);
+
 	return flag;
 }
 int parse_function(fun p)

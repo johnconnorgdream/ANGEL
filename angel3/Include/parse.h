@@ -1,5 +1,6 @@
 #ifndef parse_def
 #define parse_def
+
 #ifdef _cplusplus
 extern "c"{
 #endif

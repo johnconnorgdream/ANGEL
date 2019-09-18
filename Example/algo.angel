@@ -7,9 +7,11 @@
 
 */
 lib struct
+
 ismatrix(a)
 {
-	if(type(a) != 'array') ret false
+	if(type(a) != 'array')
+		ret false
 	old = a[0]
 	for(item in a)
 	{

@@ -74,7 +74,6 @@ object strfindall(wchar * s,wchar *pattern,int begin,int end,int patternlen)
 	next = (int *)calloc(patternlen,sizeof(int));
 	calcnext(pattern,next);
 	object_list ret = initarray();
-	lock_func_return(ret);
 	int i = begin;
 	while(i <= end)
 	{
@@ -82,6 +81,5 @@ object strfindall(wchar * s,wchar *pattern,int begin,int end,int patternlen)
 		addlist(ret,(object)initinteger(i));
 		i++;
 	}
-	release_func_return(ret);
 	return (object)ret;
 }

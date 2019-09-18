@@ -1,5 +1,42 @@
-i = 0
-while(i<100000000) 
-{
-	i =i + 1
+lib a
+
+solution(len,l,ki){
+	if(len < 3){
+		ret 0;
+	}
+	quicksort(l,0,len-1)
+	count = 0
+	for(i = 0 i < len i++){
+		a = l[i]
+		for(j = i+1 j < len j++){
+			b = l[j]
+			for(k = j+1; k < len; k++){
+				c = l[k]
+				if(a + b + c >= ki)
+				{
+					break
+				}
+				else
+				{
+					printl([a,b,c])
+					count++
+				}
+			}
+		}
+	}
+	ret count;
 }
+
+
+i = 0
+l = [1,2,3,4,5,6,7,8,9,10]
+s = 'adad'
+a = 'adhauh'
+while(i  <  300000000/1000) 
+{
+	i = i + 1
+	s = s + 'asda'
+}
+
+
+print(solution(6,[-2, 0, 1, 2, 3, 6],2))

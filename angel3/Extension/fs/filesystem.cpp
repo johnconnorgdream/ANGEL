@@ -41,7 +41,6 @@ object_dict _getfileinfo(char* pathname)
 object_list _getls(char* pathname)
 {
 	object_list ret = initarray();
-	lock_func_return(ret);
 #ifdef WIN32
 	WIN32_FIND_DATA FindFileData;
 	WCHAR *win_pathname = (WCHAR *)pathname;

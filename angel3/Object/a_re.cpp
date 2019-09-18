@@ -1357,8 +1357,7 @@ next:
 exit:
 		clearcollection(match_state);
 		free(match_record);
-		for(int i = 0; i < 100; i++)
-		{
+		for(int i = 0; i < 100; i++) {
 			free(group_record[i]);
 		}
 		for(int i = 0; i < repeat_total_num; i++)

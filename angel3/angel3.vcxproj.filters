@@ -39,9 +39,6 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="AngelCore\amem.cpp">
-      <Filter>AngelCore</Filter>
-    </ClCompile>
     <ClCompile Include="AngelCore\execute.cpp">
       <Filter>AngelCore</Filter>
     </ClCompile>
@@ -125,6 +122,9 @@
     </ClCompile>
     <ClCompile Include="Extension\initext.cpp">
       <Filter>Extension</Filter>
+    </ClCompile>
+    <ClCompile Include="AngelCore\amem.cpp">
+      <Filter>AngelCore</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
