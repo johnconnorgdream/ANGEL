@@ -69,6 +69,7 @@ object_list _getls(char* pathname)
 		_addlist(ret,(object)item);
 	}
 	while (FindNextFile(hListFile, &FindFileData));
+	FindClose(hListFile);
 #else
 
 #endif
