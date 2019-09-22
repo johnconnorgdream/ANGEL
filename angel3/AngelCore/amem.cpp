@@ -40,6 +40,10 @@ page_gc有两个范围的gc：普通gc（只对新增的field进行gc）和周期gc（目前是每4次新增f
 gc回收利用内存移动，但都是对field内部的内存移动，field之间没有内存移动，所以每次周期gc以后会做一次内存间移动（global_merge）
 如果内存间移动不满足要求就新增field
 未来的对象成员变量不再用字典存储而用数组和set配合使用，同时再字节码中存储索引缓存，防止每次都要向set中搜索索引
+
+
+cycle GC存在的合理性
+cycle可能会拖慢系统的速度
 */
 
 static angel_memry angel_object_heap,angel_data_heap;
@@ -280,7 +284,7 @@ void reset_heap()
 /*
 内存的申请与释放
 */
-
+ 
 object angel_alloc_block(int tsize)  //争取所有的对象大小都在16字节以内，当然字符串和列表除外
 {
 	object o;
@@ -363,12 +367,6 @@ void sys_realloc_list(object_list l,int resize)
 	void *addr = l->item;
 	angel_free_page(addr);
 	l->item = (object *)malloc(sizeof(object)*resize);
-}
-object initext(int size)
-{
-	object ext = angel_alloc_block(size);
-	ext->type = EXT_TYPE;
-	return ext;
 }
 
 
@@ -1126,6 +1124,7 @@ void page_gc()
 	{
 addfield:
 		//开始开辟新的内存空间并将原来的淘汰掉
+		angel_data_heap->flag = 0;
 		field f = init_page_field();
 		addfield(angel_data_heap,f);
 		if(is_page_cycle_gc_step())
@@ -1217,4 +1216,13 @@ object_slice initslice(object base,object_range range)
 	res->base = base;
 	res->range = range;
 	return res;
+}
+/*
+扩展类型的申请
+*/
+object initext(int size)
+{
+	object ext = angel_alloc_block(size);
+	ext->type = EXT_TYPE;
+	return ext;
 }

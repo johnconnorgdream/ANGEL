@@ -15,7 +15,7 @@ inline long stringhash(char *str,int length)
     while (i < length)
     {
         hash = (*str++) + (hash << 6) + (hash << 16) - hash;
-		i ++;
+		i++;
     }
  
     return (hash & 0x7FFFFFFF);

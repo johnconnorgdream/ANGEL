@@ -46,7 +46,7 @@ extern "c"{
 #define CODE_MATCH_NOT_SPACE 24
 #define CODE_EXIT 25
 #define CODE_UPDATE_ALTERENATION 26
-#define CODE_REPEAT_GREEDY_BEGIN 27
+#define CODE_REPEAT_RESET 27
 #define CODE_CHECK_NOT_CHARSET 28
 
 
@@ -83,7 +83,8 @@ typedef struct object_regularnode{
 	int16_t group_count;
 	bytecode code;
 	wchar *pattern;
-	int16_t record_count,alternation_count,repeat_history_for_duplicate;
+	int32_t *or_jump_set;
+	int16_t repeat_count,alternation_count,repeat_item_count;
 }*object_regular;
 object_regular are_compile(wchar *pattern);
 void clearregel(regelement el);

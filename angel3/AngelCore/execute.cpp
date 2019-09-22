@@ -177,9 +177,33 @@ inline object collection_mult(object left,object right)
 		}
 		o = (object)listrepeat(GETLIST(left),angel_int1);
 	}
+	else if(ISBYTES(left) || ISBYTES(right))
+	{
+		switch(left->type)
+		{
+		case INT:  //说明第二个参数必须为字符串
+			left = right;
+			angel_int1 = GETINT(left);
+			break ;
+		case BYTES:
+			;
+			if(ISINT(right))
+				angel_int1 = GETINT(right);
+			else
+			{
+				angel_error("乘法右边的类型不符合要求！");
+				return NULL;
+			}
+			break ;
+		default:
+			angel_error("乘法左边的类型不符合要求！");
+			return NULL;
+		}
+		o = (object)bytesrepeat(GETBYTES(left),angel_int1);
+	}
 	else
 	{
-		angel_error("乘法两边的类型不符合要求！");
+		angel_error("乘法左边的类型不符合要求！");
 		return NULL;
 	}
 	return o;

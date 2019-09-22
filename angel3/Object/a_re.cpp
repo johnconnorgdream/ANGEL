@@ -1,6 +1,17 @@
 
-
 //正则表达式引擎
+/*
+
+
+规则1：全局有一个匹配结果检测，每次匹配到结束时先看有没有栈中保存的足迹，如果有栈中保存的足迹。
+规则2：匹配足迹的构成（or和repeat构成），每次匹配的过程将足迹存储起来。
+规则3：防止原地踏步的情况。
+
+
+*/
+
+
+
 #include <stdlib.h>
 #include "data.h"
 #include "lib.h"
@@ -10,7 +21,6 @@
 regelement parsereg(object_regular or,wchar end = 0);
 #define reg_base_size 4
 
-int or_total_count = 0;
 wchars initwchars()
 {
 	wchars ret = (wchars)malloc(sizeof(wcharsnode));
@@ -379,7 +389,7 @@ regelement build_or_reg(object_regular or,wchar end = 0)
 			el->attr.repeat.unit = unit;
 			el->attr.repeat.repeat_min = begin;
 			el->attr.repeat.repeat_max = end;
-			el->attr.repeat.record_index = or->record_count++;
+			el->attr.repeat.record_index = or->repeat_item_count++;
 		}
 		else if(ch == '*')
 		{
@@ -403,7 +413,7 @@ regelement build_or_reg(object_regular or,wchar end = 0)
 			el->attr.repeat.unit = unit;
 			el->attr.repeat.repeat_min = 1;
 			el->attr.repeat.repeat_max = LONG_MAX;
-			el->attr.repeat.record_index = or->record_count++;
+			el->attr.repeat.record_index = or->repeat_item_count++;
 			SKIP(1);
 		}
 		else if(ch == '?')
@@ -484,9 +494,7 @@ void clearregexp(collection rg)
 }
 regelement parsereg(object_regular or,wchar end)
 {
-	
 	collection ret = initcollection(reg_base_size);
-	int index = or->alternation_count++;
 	if(CUR == '|')
 	{
 		angel_error("正则表达式第一个不能为|");
@@ -494,8 +502,8 @@ regelement parsereg(object_regular or,wchar end)
 	}
 	while(1)
 	{
+		or->alternation_count++;
 		regelement res = build_or_reg(or,end);
-		or_total_count++;
 		if(res != NULL)
 			addcollection(ret,res);
 		else
@@ -514,14 +522,12 @@ regelement parsereg(object_regular or,wchar end)
 		SKIP(1);
 	}
 	regelement root = buildtogether(TYPE_ALTERNATION,ret);
-	ret->alloc = index;
 	return root;
 }
 #define ADDBYTE(b) {addbyte(bc,b);}
 #define ADDWORD(w) {addtwobyte(bc,w);}
 //注意后面的parse部分也要传入regularobject
 
-int *or_jump_set;
 inline void insertword(bytecode bc,int offset,int writepos)
 {
 	int temp = bc->len;
@@ -535,69 +541,49 @@ void compile_repeat(regelement el,object_regular or)
 	bytecode bc = or->code;
 	int min = el->attr.repeat.repeat_min;
 	int max = el->attr.repeat.repeat_max;
-	int begin1 = bc->len,begin2;
+	int begin;
 	int flag = 0;
-	int write1,write2;
-	or->repeat_history_for_duplicate++;
+	int write;
+	begin = bc->len;
+	int has_recorded = 0;
 	if(el->flag == 0)  //这是贪婪匹配算法
 	{
-		ADDBYTE(CODE_REPEAT_GREEDY_BEGIN);
-		write1 = bc->len;
-		bc->len += 2;
-		begin2 = bc->len;
-		if(min == 0 && max == LONG_MAX)
-		{
+		if(min == 0 && max == LONG_MAX) {
 			ADDBYTE(CODE_REPEAT_GREEDY);
-			ADDWORD(or->record_count+or->repeat_history_for_duplicate++);
 		}
-		else if(min == 0 && max == 1)
-		{
+		else if(min == 0 && max == 1) {
 			ADDBYTE(CODE_REPEAT_GREEDY_CONDITION);
-			ADDWORD(or->record_count+or->repeat_history_for_duplicate++);
 			flag = 1;
 		}
-		else if(min == 1 && max == LONG_MAX)
-		{
+		else if(min == 1 && max == LONG_MAX) {
 			ADDBYTE(CODE_REPEAT_GREEDY_WITH_ONE);
 			ADDWORD(el->attr.repeat.record_index);
+			has_recorded = 1;
 		}
-		else
-		{
+		else {
 			ADDBYTE(CODE_REPEAT_GREEDY_BOTH);
 			ADDWORD(el->attr.repeat.record_index);
 			ADDWORD(min);
 			ADDWORD(max);
+			has_recorded = 1;
 		}
-		
-		write2 = bc->len;
-		bc->len += 2;  //这是填充跳跃的字段
-		compile_element(el->attr.repeat.unit,or);
-		int offset = bc->len - begin2;
-		if(flag == 0)
-		{
-			ADDBYTE(CODE_JUMP);
-			ADDWORD(offset);
-		}
-		insertword(bc,bc->len - begin1,write1);
-		insertword(bc,bc->len - begin2,write2);
 	}
 	else
 	{
 		if(min == 0 && max == LONG_MAX)
 		{
 			ADDBYTE(CODE_REPEAT_LAZY);
-			ADDWORD(or->record_count+or->repeat_history_for_duplicate++);
 		}
 		else if(min == 0 && max == 1)
 		{
 			ADDBYTE(CODE_REPEAT_LAZY_CONDITION);
-			ADDWORD(or->record_count+or->repeat_history_for_duplicate++);
 			flag = 1;
 		}
 		else if(min == 1 && max == LONG_MAX)
 		{
 			ADDBYTE(CODE_REPEAT_LAZY_WITH_ONE);
 			ADDWORD(el->attr.repeat.record_index);
+			has_recorded = 1;
 		}
 		else
 		{
@@ -605,17 +591,24 @@ void compile_repeat(regelement el,object_regular or)
 			ADDWORD(el->attr.repeat.record_index);
 			ADDWORD(min);
 			ADDWORD(max);
+			has_recorded = 1;
 		}
-		write1 = bc->len;
-		bc->len += 2;  //这是填充跳跃的字段
-		compile_element(el->attr.repeat.unit,or);
-		int offset = bc->len - begin1;
-		if(flag == 0)
-		{
-			ADDBYTE(CODE_JUMP);
-			ADDWORD(offset);
-		}
-		insertword(bc,bc->len - begin1,write1);
+	}
+	write = bc->len;
+	bc->len += 2;  //这是填充跳跃的字段
+	ADDWORD(or->repeat_count++);
+	compile_element(el->attr.repeat.unit,or);
+	int offset = bc->len - begin;
+	if(flag == 0)
+	{
+		ADDBYTE(CODE_JUMP);
+		ADDWORD(offset);
+	}
+	insertword(bc,bc->len - begin,write);
+	if(has_recorded)
+	{
+		ADDBYTE(CODE_REPEAT_RESET);
+		ADDWORD(el->attr.repeat.record_index);
 	}
 }
 void compile_together(regelement el,object_regular or,int flag = 0)
@@ -624,7 +617,7 @@ void compile_together(regelement el,object_regular or,int flag = 0)
 	collection orlist = el->attr.or_list;
 	for(int i = 0; i < orlist->size; i++)
 	{
-		if(flag == 1 && i < orlist->size-1) //到最后一个可选项之前都要用CODE_ALTERNATION指令
+		if(flag == 1 && i < orlist->size - 1) //到最后一个可选项之前都要用CODE_ALTERNATION指令
 		{
 			//这里面到头了就不能再CODE_ALTERNATION了
 			int begin = bc->len;
@@ -632,18 +625,18 @@ void compile_together(regelement el,object_regular or,int flag = 0)
 			bc->len += 2;
 			compile_element((regelement)orlist->element[i],or);
 			ADDBYTE(CODE_UPDATE_ALTERENATION);
-			ADDWORD(orlist->alloc);
+			ADDWORD(or->alternation_count);
 			insertword(bc,bc->len-begin,begin+1);
 		}
 		else
 			compile_element((regelement)orlist->element[i],or);
 	}
-	if(flag == 1)
+	if(flag == 1 && orlist->size > 1)
 	{
 		ADDBYTE(CODE_UPDATE_ALTERENATION);
-		ADDWORD(orlist->alloc);
+		ADDWORD(or->alternation_count);
+		or->or_jump_set[or->alternation_count++] = bc->len;
 	}
-	or_jump_set[orlist->alloc] = bc->len;
 }
 void compile_charset(regelement el,object_regular or)
 {
@@ -770,48 +763,48 @@ object_regular are_compile(wchar *pattern) //编译模式串
 	ret->type = REGULAR;
 	ret->code = bc;
 	ret->pattern = pattern;
-	ret->record_count = 0;
+	ret->repeat_count = 0;
 	ret->alternation_count = 0;
-	ret->repeat_history_for_duplicate = 0;
+	ret->repeat_item_count = 0;
 	ret->group_count = 0;
 	regelement root = parsereg(ret,'/');
 	if(root == NULL) return NULL;
-	or_jump_set = (int *)calloc(or_total_count,sizeof(int));
+	if(ret->alternation_count > 0)
+		ret->or_jump_set = (int *)calloc(ret->alternation_count,sizeof(int));
+	ret->alternation_count = 0;
 	compile_element(root,ret);
 	ADDBYTE(CODE_EXIT);
 	return ret;
 }
 typedef struct statenode{
+	int isgreedy;  //是否是贪婪
 	int index;  //匹配的位置
 	char *pos;  //执行的位置
 }*state;
-inline void pushstate(collection g_state,int index,char *code)
+
+inline void pushstate(collection g_state,int index,char *code,int isgreedy = 1)
 {
 	state s = NULL;
-	if(g_state->size > 0)
-	{
+	if(g_state->size > 0) {
 		state top = (state)g_state->element[g_state->size - 1];
-		if(top->index == index && top->pos == code)
-		{
+		if(top->index == index && top->pos == code) {
 			return ;
 		}
 	}
-	if(g_state->size < g_state->alloc)
-	{
+	if(g_state->size < g_state->alloc) {
 		s = (state)g_state->element[g_state->size++];
-		if(!s)
-		{
+		if(!s) {
 			s = (state)malloc(sizeof(statenode));
 			g_state->element[g_state->size-1] = s;
 		}
 	}
-	else
-	{
+	else {
 		s = (state)malloc(sizeof(statenode));
 		addcollection(g_state,s);
 	}
 	s->index = index;
 	s->pos = code;
+	s->isgreedy = isgreedy;
 }
 inline state popstate(collection g_state)
 {
@@ -990,11 +983,11 @@ typedef struct codeinfo{
 };
 codeinfo regcode[] = {
 {"CODE_ALTERNATION",3,2},
-{"CODE_REPEAT_GREEDY",5,2},
+{"CODE_REPEAT_GREEDY",3,2},
 {"CODE_REPEAT_GREEDY_WITH_ONE",5,2},
 {"CODE_REPEAT_GREEDY_BOTH",9,2},
 {"CODE_REPEAT_GREEDY_CONDITION",5,2},
-{"CODE_REPEAT_LAZY",5,2},
+{"CODE_REPEAT_LAZY",3,2},
 {"CODE_REPEAT_LAZY_WITH_ONE",5,2},
 {"CODE_REPEAT_LAZY_BOTH",9,2},
 {"CODE_REPEAT_LAZY_CONDITION",5,2},
@@ -1015,7 +1008,7 @@ codeinfo regcode[] = {
 {"CODE_MATCH_NOT_SPACE",1,0},
 {"CODE_EXIT",1,0},
 {"CODE_UPDATE_ALTERENATION",3,2},
-{"CODE_REPEAT_GREEDY_BEGIN",3,2}
+{"CODE_REPEAT_GREEDY_EXIT",3,2}
 };
 
 //在repeat指令处理中，要尽可能的减少pushstate通过预执行下一条指令（如果吓一条是简单的比较指令则不需要pushstate）
@@ -1025,60 +1018,46 @@ int reg_match(object_regular or,wchar *source,int begin,int end)
 #define _SKIP(step) scan += step;
 #define RECALL \
 	do { \
-		if(match_state->size == 0) goto exit; \
+		stack_pop_flag = 1; \
 		current = popstate(match_state);  \
 		if(current){ \
-			if(current_state){ \
-				if(current_state->index < scan) { \
-					current_state->index = scan; \
-				} \
-			}\
-			scan = current->index; code = current->pos; goto backtobegin; \
-		}else{ \
-			if(current_state) { \
-				scan = current_state->index; \
-				code = current_state->pos; \
-				current_state = NULL; \
-			} \
-			goto exit; \
+			scan = current->index; code = current->pos; isgreedy = current->isgreedy; goto backtobegin; \
 		} \
+		else goto exit; \
 	}while(0);
 #define IFEND if(scan > end) {RECALL;}
 #define NEXT  IFEND check = source[scan++];
-#define PUSHSTATE(offset) if(test_next(code+offset,source[scan],group_record)) pushstate(match_state,scan,code+offset); //注意这里是直接调到下一个指令
-#define PUSHSTATE_REPEAT(indx, offset) \
+#define PUSHSTATE(offset,isgreedy) if(test_next(code+offset,source[scan],group_record)) pushstate(match_state,scan,code+offset,isgreedy); //注意这里是直接调到下一个指令
+#define PUSHSTATE_REPEAT(offset,duplicate,isgreedy) \
 			do{ \
-				char *pre_repeat_pos = pre_repeat_history[indx]->pos; \
-				int pre_repeat_codeoff = pre_repeat_history[indx]->index; \
-				char *testcode = code + offset; \
-				if(pre_repeat_pos != testcode || pre_repeat_codeoff != scan) {\
-					PUSHSTATE(offset); pre_repeat_history[indx]->pos = testcode; pre_repeat_history[indx]->index = scan; \
+				if(repeat_for_duplicate_record[duplicate] != scan || match_state->size == 0)/*只有在一轮repeat后scan有移动才考虑pushstate*/ { \
+					repeat_for_duplicate_record[duplicate] = scan; \
+					PUSHSTATE(offset,isgreedy); \
 				}\
 			}while(0);
-	char *code = or->code->code,pre_repeat_code;
+	char *code = or->code->code;
 	int scan = begin;
-	int max_match_size = 0;
+	int max_match_pos = 0;
 	int repeat_times = 0;
 	int arg1,arg2,arg3;
-	int *match_record = (int *)calloc(or->record_count+or->alternation_count,sizeof(int));
-	int repeat_total_num = or->repeat_history_for_duplicate + or->record_count;
-	state *pre_repeat_history = (state *)calloc(repeat_total_num,sizeof(state));
-	register int16_t interval = or->record_count;
+	int *match_record = (int *)calloc(or->repeat_item_count,sizeof(int));
+	int *repeat_for_duplicate_record = (int *)calloc(or->repeat_count,sizeof(int));
 	wchar check;
 	wchar *charset;
 	collection match_state = initcollection();
 	state group_record[100];
-	for(int i = 0; i < repeat_total_num; i++)
-	{
-		pre_repeat_history[i] = (state)calloc(1,sizeof(statenode));
-	}
+
+	//标志着当前是从stack中pop出来的repeat单元，主要是为了防止次数限制重复的repeat操作
+	int stack_pop_flag = 0;
+	int isgreedy = 1;
+
+	//定义100个捕获组
 	for(int i = 0; i < 100; i++)
 	{
 		group_record[i] = (state)calloc(1,sizeof(statenode));
 	}
 	//匹配只有两个准则，对于repeat要将整个匹配结果尽可能长，而alternation是需要将选择最长的item即可
 	//current_sate即表示当前在哪个最外层的repeat context下的
-	state current_state = NULL,stemp = (state)calloc(1,sizeof(statenode));
 	state current;
 
 	int match_size;
@@ -1096,17 +1075,7 @@ backtobegin:
 		case CODE_UPDATE_ALTERENATION:
 			//更新选择匹配的最大值
 			arg1 = PARAM(1);
-			arg2 = or_jump_set[arg1];
-			max_match_size = match_record[arg1+interval];
-			match_size = scan;
-			if(max_match_size == -1)
-			{
-				angel_error("匹配可选向出错！");
-				goto exit;
-			}
-			if(match_size > max_match_size)
-				match_record[arg1+interval] = match_size;  //这是上一次的
-			//跳跃本次选择
+			arg2 = or->or_jump_set[arg1];
 			code = or->code->code + arg2;
 			continue ;
 		case CODE_ALTERNATION:
@@ -1117,52 +1086,53 @@ backtobegin:
 			code -= PARAM(1);  //跳转
 			isjumpflag = 1;
 			continue ;
-		case CODE_REPEAT_GREEDY_BEGIN:
-			if(!current_state)
-			{
-				arg1 = PARAM(1);
-				current_state = stemp;
-				current_state->pos = code+arg1;
-			}
+		case CODE_REPEAT_RESET:
+			match_record[PARAM(1)] = 0;
 			NEXTOP(3);
 		case CODE_REPEAT_GREEDY:
 		case CODE_REPEAT_GREEDY_CONDITION:
-			arg1 = PARAM(1); //index
-			arg2 = PARAM(3); //offset
 			//每次将repeat的匹配历史保存以免每次都是在同样的context下repeat
-			PUSHSTATE_REPEAT(arg1,arg2)
+			PUSHSTATE_REPEAT(PARAM(1),PARAM(3),1)
 			//由于是无上界的贪婪匹配，所以每次不需要判断直接进入循环
 			NEXTOP(5);
 		case CODE_REPEAT_GREEDY_WITH_ONE:
 			arg1 = PARAM(1);  //recordindex
-			if(match_record[arg1] == 0)
+			if(!stack_pop_flag && match_record[arg1] == 0) 
+			{
 				match_record[arg1] = 1;
+			}
 			else
 			{
-				arg2 = PARAM(3);
-				PUSHSTATE_REPEAT(arg1,arg2);
+				PUSHSTATE_REPEAT(PARAM(3),PARAM(5),1);
 			}
-			NEXTOP(5);
+			NEXTOP(7);
 		case CODE_REPEAT_GREEDY_BOTH:
 			arg3 = PARAM(1);
 			repeat_times = match_record[arg3];
 			arg1 = PARAM(3);
 			arg2 = PARAM(5);
-			if(repeat_times >= arg2)
-			{
-				code += PARAM(7);
-				continue ;
+			if(!stack_pop_flag){
+				if(repeat_times >= arg1 && repeat_times <= arg2)
+				{
+					match_record[arg3] = repeat_times+1;
+				}
+				else if(repeat_times > arg2)
+				{
+					code += PARAM(7);
+					continue ;
+				}
+				else
+				{
+					PUSHSTATE_REPEAT(PARAM(7),PARAM(9),1);
+				}
 			}
-			else if(repeat_times >= arg1)
-			{
-				PUSHSTATE_REPEAT(arg3,PARAM(7));
-			}
-			match_record[arg3] = repeat_times+1;
-			NEXTOP(9);
+			else
+				PUSHSTATE_REPEAT(PARAM(7),PARAM(9),1);
+			NEXTOP(11);
 		case CODE_REPEAT_LAZY:
 		case CODE_REPEAT_LAZY_CONDITION:
 			arg1 = PARAM(1);
-			PUSHSTATE(arg1,0);
+			PUSHSTATE(0,PARAM(3),0);
 			if(isjumpflag) {
 				isjumpflag = 0;
 				code += arg1;
@@ -1171,21 +1141,20 @@ backtobegin:
 			NEXTOP(5);
 		case CODE_REPEAT_LAZY_WITH_ONE:
 			arg1 = PARAM(1);  //recordindex
-			if(match_record[arg1] == 0)
+			if(!stack_pop_flag && match_record[arg1] == 0)
 			{
 				match_record[arg1] = 1;
 			}
 			else
 			{
-				arg1 = PARAM(3);
-				PUSHSTATE_REPEAT(arg1,0);
+				PUSHSTATE_REPEAT(0,PARAM(5),0);
 				if(isjumpflag) {
 					isjumpflag = 0;
 					code += arg1;
 					continue ;
 				}
 			}
-			NEXTOP(5);
+			NEXTOP(7);
 		case CODE_REPEAT_LAZY_BOTH:
 			arg3 = PARAM(1);
 			repeat_times = match_record[arg3];
@@ -1198,7 +1167,7 @@ backtobegin:
 			}
 			else if(repeat_times >= arg1)
 			{
-				PUSHSTATE_REPEAT(arg3,0);
+				PUSHSTATE_REPEAT(0,PARAM(9),0);
 				if(isjumpflag) {
 					isjumpflag = 0;
 					code += PARAM(7);
@@ -1206,7 +1175,7 @@ backtobegin:
 				}
 			}
 			match_record[arg3] = repeat_times+1;
-			NEXTOP(9);
+			NEXTOP(11);
 		case CODE_CHECK_NOT_CHARSET:
 			NEXT;
 			arg1 = PARAM(1); //range size
@@ -1345,8 +1314,12 @@ complete_charset:
 			}
 			NEXTOP(1);
 		case CODE_EXIT:
-			ret = match_record[interval] - begin;
-			goto exit;
+			max_match_pos = max_match_pos > scan ? max_match_pos : scan;
+			if(max_match_pos > end)  //表示此时是已经是最大的了
+			{
+				goto exit;
+			}
+			RECALL;
 		default:
 			angel_error("正则引擎---未知指令！");
 			goto exit;
@@ -1357,16 +1330,12 @@ next:
 exit:
 		clearcollection(match_state);
 		free(match_record);
+		free(repeat_for_duplicate_record);
 		for(int i = 0; i < 100; i++) {
 			free(group_record[i]);
 		}
-		for(int i = 0; i < repeat_total_num; i++)
-		{
-			free(pre_repeat_history[i]);
-		}
-		free(stemp);
 		//清理各种环境
-		return ret;
+		return max_match_pos - begin;
 }
 object reg_find(object_regular or,wchar *source,int begin,int end)
 {

@@ -4,6 +4,7 @@
 #include "data.h"
 #include "util.h"
 #include "execute.h"
+#include "shell.h"
 
 __forceinline int encode_format(char *buffer,char **decode_entry)
 {
@@ -182,15 +183,11 @@ object checkpatternparam(object pattern)
 	{
 		wchar * patterntmp = (wchar *)GETSTR(pattern)->s;
 		if(*patterntmp == '/')  //表示此时是正则表达式
-			regular = (object)are_compile(patterntmp+1);
+			regular = (object)are_compile(patterntmp + 1);
 	}
 	else if(!ISREGULAR(pattern))
 	{
 		return NULL;
-	}
-	else
-	{
-		ASCREF(pattern);  //以方便后面统一decref
 	}
 	return regular;
 }

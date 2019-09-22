@@ -155,11 +155,12 @@ object sysregular(object s)
 {
 	ARG_CHECK(s,STR,"regular",1);
 	object res = checkpatternparam((object)s);
-	if(!res)
+	if(ISSTR(res))
 	{
+		angel_error("正则表达式必须是/**/格式！");
 		return GETNULL;
 	}
-return (object)res;
+	return (object)res;
 }
 //系统函数不打算用类的形式提供，所以需要考虑系统资源表示数目问题
 angel_buildin_func angel_build_in_def[] = 

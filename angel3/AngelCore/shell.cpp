@@ -663,8 +663,8 @@ void transcode(bytecode bc)
 	}
 	angel_out("\n");
 }
-
-
+ 
+ 
 void setangelenv()
 {
 	int len=0,alloc=0;
@@ -788,7 +788,7 @@ nextchar:
 }
 int compiler(FILE *f)
 {
-	token res;
+	token res; 
 	tokenlen=0;
 	init();
 	code c=predeal(f);  //是做一些编码测试和引入库的工作

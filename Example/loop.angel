@@ -2,15 +2,16 @@ lib a
 
 solution(len,l,ki){
 	if(len < 3){
-		ret 0;
+		ret 0
 	}
 	quicksort(l,0,len-1)
 	count = 0
+	return = []
 	for(i = 0 i < len i++){
 		a = l[i]
 		for(j = i+1 j < len j++){
 			b = l[j]
-			for(k = j+1; k < len; k++){
+			for(k = j+1 k < len k++){
 				c = l[k]
 				if(a + b + c >= ki)
 				{
@@ -18,13 +19,13 @@ solution(len,l,ki){
 				}
 				else
 				{
-					printl([a,b,c])
+					return.add([a,b,c])
 					count++
 				}
 			}
 		}
 	}
-	ret count;
+	ret return
 }
 
 
@@ -33,11 +34,18 @@ l = [1,2,3,4,5,6,7,8,9,10]
 s = 'adad'
 a = 'adhauh'
 
+/*
 while(i  <  100000000) 
 {
 	i = i + 1
 	l[i % 10] = l[(i+1) % 10]
 	//s = s + 'asda'
 }
-
-print(solution(6,[-2, 0, 1, 2, 3, 6],2))
+*/
+//l = [-2, 0, 1, 2, 3, 6]*90
+//print(solution(l.size(),l,2).size())
+len = l.size()
+for(i = 0 l = [1 2] i++){
+	if(i > 10000000) break
+}
+print(l)

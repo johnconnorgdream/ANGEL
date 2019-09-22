@@ -12,21 +12,32 @@
 #include "amem.h"
 #include "aenv.h"
 
-
-//数值也是用记号来表示
-//getvaluebytoken得到的是变量的值而非引用，并且他返回的类型为整形值。
-//因为这里多次调用execord函数。
-//除了在赋值行为上其他一切都是返回值而非对象引用
-//获得数组和字符串成员变量的操作已经定下来了。
-//可以将本系统大致分为可输入和输出模块，可输入模块是需要引用的（比如变量,其中成员变量、普通变量、列表的的子项都有类似的效应），输出模块也是指运算的中间结果，比如函数返回值、四则运算的中间值,
-//函数机制和面向对象机制需要注意的问题是背景环境，简单的说就是参数赋值时赋值参数和被赋值参数所处的环境不同。
-//私有成员变量机制从this.^x开始
-//数据对象只有在使用的时候才放到obj_list,并记录偏移量
-
 /*
+
+数值也是用记号来表示
+getvaluebytoken得到的是变量的值而非引用，并且他返回的类型为整形值。
+因为这里多次调用execord函数。
+除了在赋值行为上其他一切都是返回值而非对象引用
+获得数组和字符串成员变量的操作已经定下来了。
+可以将本系统大致分为可输入和输出模块，可输入模块是需要引用的（比如变量,其中成员变量、普通变量、列表的的子项都有类似的效应），输出模块也是指运算的中间结果，比如函数返回值、四则运算的中间值,
+函数机制和面向对象机制需要注意的问题是背景环境，简单的说就是参数赋值时赋值参数和被赋值参数所处的环境不同。
+私有成员变量机制从this.^x开始
+数据对象只有在使用的时候才放到obj_list,并记录偏移量
+
+
+
+
 这里面的obj_list，global_value，funlist，switch_table,name_pool都是支持2个字节寻址如果必要的话未来会考虑用拓展的四字节操作数，前提条件是列表的长度没有超过65535
 其中funlist需要提前将所有重载的函数放在一起，函数映射表中只包含第一个函数的索引
 还有要单独设一个迭代器对象，用于记录列表，集合，或字典迭代的当前状态
+
+
+未来的方向，不要bracketdetect之类的操作
+包括字典和集合类型定义时用的{和}也不要用事先detect来降低:运算符的优先级
+编译环节的大量内存泄漏问题
+token t[maxsize]的设计很不合理
+逗号运算符优先级最低
+
 */
 
 
@@ -51,7 +62,7 @@ token t[maxtoken];
 int islib;
 char **directory;
 int tokenlen=0;
-keyword keywordlib[]={{"if",IF},{"while",LOOP},{"continue",CONTINUE},{"break",BREAK},{"for",FOR},
+keyword keywordlib[] = {{"if",IF},{"while",LOOP},{"continue",CONTINUE},{"break",BREAK},{"for",FOR},
 {"null",NU},{"true",TRUE},{"false",FALSE},{"switch",SWITCH},{"case",CASE},{"default",DEFAULT},
 {"==",EQU},{"+",ADD},{"-",SUB},{"*",MUL},{"/",DIV},{"(",LBRACKETL},{")",LBRACKETR},
 {"[",MBRACKETL},{"]",MBRACKETR},{"{",BBRACKETL},{"}",BBRACKETR},{";",END},{"<",SMALL},{">",BIG},
@@ -77,9 +88,7 @@ object_set keytable;
 #define _CLEAR_STACK(stack) do{stack->top--;}while(0);
 #define ISSENTENCEEND(pos) (t[*pos]->id == END || t[*pos]->id == DOUHAO || t[*pos]->id == endid || (!ISKEYWORD(t[*pos]->id)))
 #define NOTEND(offset) (offset < tokenlen)
-#define RESET_STACK(stack)  do{ \
-								push(stack,NULL); \
-							}while(0);
+#define RESET_STACK(stack)  do{push(stack,NULL);}while(0);
 /*
 通用接口和脚本语言的预处理
 */
@@ -127,6 +136,7 @@ int quicksort(_switch *a,int low,int high)//快速排序的核心是每次确定一个位置
 	}
 	return 1;
 }
+
 fun initfuncontrol(char *funname,int type=0)
 {
 	fun f=(fun)malloc(sizeof(funnode));

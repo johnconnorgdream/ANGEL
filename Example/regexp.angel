@@ -326,7 +326,9 @@ match(s,s1)
 	}
 	ret res
 }
-
+add4(a,b){
+	ret a+b
+}
 f = readfile('F:\Visual Studio2010\vc\文件\斗鱼.html')
 f *= 2
 print(f.size())
