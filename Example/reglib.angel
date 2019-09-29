@@ -1,22 +1,25 @@
 lib a
 res = []
 //r = regular('/\t(\w)+/')
-//r = regular('/\[(,*(\[(,*\d+)*\])+)*\]/')
-
-//r = regular('/(a|b)*/')
-r = regular('/(acd)+/')
-
+r = regular('/\[(,*(\[(,*\d+)*\])+)*\]/')
+//r = regular('/[\{\},\/\*]|if|else|while|ret|for|class|continue|false/')  //目前没有python快的原因是我所有的alternative都是严格按照指令运行，没有考虑到优化问题
 s = readfile('f:\\visual studio2010\\vc\\文件\\math.angel')
+s *= 100
+//ms = s.findall(r)
+//print(ms.size())
 
+
+
+r = regular('/(acd)+/')
 //print(s)
 
-eachtimes = 4800000
-//s = ('a' + 'b' + 'c') * eachtimes
-s = 'a' * eachtimes + 'c' * eachtimes + 'd' * eachtimes
-s = 'acd'*eachtimes
+eachtimes = 5000000
+//s = 'a' * eachtimes + 'c' * eachtimes + 'd' * eachtimes
+s = 'acd' * eachtimes
 
 ms = s.find(r)
-for(item in ms)print(s[item])
+print(ms)
+//for(item in ms) print(s[item])
 /*
 ms = s.findall(r)
 for(item in ms)

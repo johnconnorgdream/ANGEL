@@ -76,6 +76,11 @@ typedef struct regelementnode{
 		}repeat;
 	}attr;
 }*regelement;
+typedef struct statenode{
+	int isgreedy;  //是否是贪婪
+	int index;  //匹配的位置
+	char *pos;  //执行的位置
+}*state;
 typedef struct object_regularnode{
 	BASEDEF;
 	//上下行运行环境
@@ -85,6 +90,9 @@ typedef struct object_regularnode{
 	wchar *pattern;
 	int32_t *or_jump_set;
 	int16_t repeat_count,alternation_count,repeat_item_count;
+	int32_t *match_record,*repeat_for_duplicate_record;
+	statenode *group;
+	collection match_state;
 }*object_regular;
 object_regular are_compile(wchar *pattern);
 void clearregel(regelement el);

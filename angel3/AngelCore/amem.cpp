@@ -424,6 +424,11 @@ __forceinline void dec_element(object p,int mode = 0)
 		return ;
 	case REGULAR:
 		freebytecode(GETREGULAR(p)->code);
+		free(GETREGULAR(p)->group);
+		free(GETREGULAR(p)->or_jump_set);
+		free(GETREGULAR(p)->match_record);
+		free(GETREGULAR(p)->repeat_for_duplicate_record);
+		clearcollection(GETREGULAR(p)->match_state);
 		return ;
 	case ITERATOR:
 		DEEP_DECREF(GETITER(p)->base);

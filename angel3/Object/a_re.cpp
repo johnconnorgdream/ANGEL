@@ -5,11 +5,15 @@
 难点1：保证最终的匹配符合greedy和lazy模式
 难点2：保证
 
+
+目前在正则引擎上没有做优化，即虚拟机的优化，比如alterlative
+
 */
 
 
 
 #include <stdlib.h>
+#include <memory>
 #include "data.h"
 #include "lib.h"
 #include "shell.h"
@@ -772,13 +776,12 @@ object_regular are_compile(wchar *pattern) //编译模式串
 	ret->alternation_count = 0;
 	compile_element(root,ret);
 	ADDBYTE(CODE_EXIT);
+	ret->match_record = (int *)calloc(ret->repeat_item_count,sizeof(int));
+	ret->repeat_for_duplicate_record = (int *)calloc(ret->repeat_count,sizeof(int));
+	ret->group = (statenode *)calloc(100,sizeof(statenode));
+	ret->match_state = initcollection();
 	return ret;
 }
-typedef struct statenode{
-	int isgreedy;  //是否是贪婪
-	int index;  //匹配的位置
-	char *pos;  //执行的位置
-}*state;
 
 inline void pushstate(collection g_state,int index,char *code,int isgreedy = 1)
 {
@@ -1010,12 +1013,14 @@ codeinfo regcode[] = {
 {"CODE_MATCH_NOT_SPACE",1,0},
 {"CODE_EXIT",1,0},
 {"CODE_UPDATE_ALTERENATION",3,2},
-{"CODE_REPEAT_GREEDY_EXIT",3,2}
+{"CODE_REPEAT_RESET",3,2},
+{"CODE_CHECK_NOT_CHARSET",-1,2}
 };
-
 //在repeat指令处理中，要尽可能的减少pushstate通过预执行下一条指令（如果吓一条是简单的比较指令则不需要pushstate）
 
 
+
+//reg_match中的malloc和free函数不要有，这个这个很拖慢速度的
 int reg_match(object_regular or,wchar *source,int begin,int end)
 {
 //设置一个
@@ -1028,16 +1033,6 @@ int reg_match(object_regular or,wchar *source,int begin,int end)
 		if(current){ \
 			isgreedy = current->isgreedy; code = current->pos; \
 			scan = current->index; goto backtobegin; \
-		} \
-		else goto exit; \
-	}while(0);
-#define RECALL_EXIT \
-	do { \
-		stack_pop_flag = 1; \
-		current = popstate(match_state);  \
-		if(current){ \
-			scan = current->index; code = current->pos; isgreedy = current->isgreedy; \
-			if(isgreedy) goto backtobegin; else goto exit;\
 		} \
 		else goto exit; \
 	}while(0);
@@ -1056,25 +1051,28 @@ int reg_match(object_regular or,wchar *source,int begin,int end)
 	int max_match_pos = begin;
 	int repeat_times = 0;
 	int arg1,arg2,arg3;
-	int *match_record = (int *)calloc(or->repeat_item_count,sizeof(int));
-	int *repeat_for_duplicate_record = (int *)calloc(or->repeat_count,sizeof(int));
+	int *match_record = or->match_record;
+	memset(match_record,0,sizeof(int)*or->repeat_item_count);
+	int *repeat_for_duplicate_record = or->repeat_for_duplicate_record;
+	memset(repeat_for_duplicate_record,0,sizeof(int)*or->repeat_count);
 	wchar check;
 	wchar *charset;
-	collection match_state = initcollection();
+	collection match_state = or->match_state;
+	match_state->size = 0;
 	state group_record[100];
-
+	for(int i = 0; i < 100; i++)
+	{
+		group_record[i] = &or->group[i];
+	}
 	//标志着当前是从stack中pop出来的repeat单元，主要是为了防止次数限制重复的repeat操作
 	int stack_pop_flag = 0;
 	int isgreedy = 1;
 
-	//定义100个捕获组
-	for(int i = 0; i < 100; i++)
-	{
-		group_record[i] = (state)calloc(1,sizeof(statenode));
-	}
 	//匹配只有两个准则，对于repeat要将整个匹配结果尽可能长，而alternation是需要将选择最长的item即可
 	//current_sate即表示当前在哪个最外层的repeat context下的
 	state current;
+	char *codebase = or->code->code;
+	int32_t *jump_set = or->or_jump_set;
 
 	int match_size;
 	int ret = 0;
@@ -1092,12 +1090,12 @@ backtobegin:
 		case CODE_UPDATE_ALTERENATION:
 			//更新选择匹配的最大值
 			arg1 = PARAM(1);
-			arg2 = or->or_jump_set[arg1];
-			code = or->code->code + arg2;
+			arg2 = jump_set[arg1];
+			code = codebase + arg2;
 			continue ;
 		case CODE_ALTERNATION:
 			//保护下一次选择匹配的位置
-			pushstate(match_state,scan,code+PARAM(1));//将下一个入栈
+			pushstate(match_state,scan,code+PARAM(1),0);//将下一个入栈
 			NEXTOP(3);
 		case CODE_JUMP:
 			code -= PARAM(1);  //跳转
@@ -1215,7 +1213,7 @@ backtobegin:
 			}
 			RECALL;
 complete_notcharset:
-			NEXTOP(5+(arg1+arg2)*2);
+			NEXTOP(5 + (arg1 + arg2) * 2);
 		case CODE_CHECK_CHARSET:
 			//CODE_CHECK_CHARSET匹配到以后要判断CODE_CHECK_RANGE是否有匹配
 			NEXT;
@@ -1239,7 +1237,7 @@ complete_notcharset:
 			}
 			RECALL;
 complete_charset:
-			NEXTOP(5+(arg1+arg2)*2);
+			NEXTOP(5+(arg1*2+arg2)*2);
 		case CODE_CHAR:
 			NEXT;
 			if(PARAM(1) != check)
@@ -1336,7 +1334,17 @@ complete_charset:
 			{
 				goto exit;
 			}
-			RECALL_EXIT;
+			stack_pop_flag = 1; 
+			current = popstate(match_state);
+			while(current){ 
+				scan = current->index; 
+				code = current->pos; 
+				isgreedy = current->isgreedy; 
+				if(isgreedy)
+					goto backtobegin;
+				current = popstate(match_state);
+			}
+			goto exit; 
 		default:
 			angel_error("正则引擎---未知指令！");
 			goto exit;
@@ -1345,12 +1353,6 @@ next:
 		;
 	}
 exit:
-		clearcollection(match_state);
-		free(match_record);
-		free(repeat_for_duplicate_record);
-		for(int i = 0; i < 100; i++) {
-			free(group_record[i]);
-		}
 		//清理各种环境
 		return max_match_pos - begin;
 }
@@ -1384,7 +1386,7 @@ object reg_findall(object_regular or,wchar *source,int begin,int end)
 			
 			_addlist(ret,(object)item);
 		}
-		i++;
+		i += (matchsize == 0 ? 1 : matchsize);
 	}
 	
 	return (object)ret;
@@ -1401,20 +1403,20 @@ object syscode_regular(object o)
 	char info[errorsize];
 	sprintf(info,"正则表达式的字节码总共%d个字节\n",b->len);
 	angel_out(info);
-	while(scan < b->len)
+	char *code = b->code;
+	while(code < b->code + b->len)
 	{
-		char *code = b->code;
-		uchar inst = code[scan]-1;
+		uchar inst = *code - 1;
 		char *name = regcode[inst].name;
 		int offset = regcode[inst].argoffset;
 		int unit = regcode[inst].unit;
 
-		if(offset == -1)
-			offset = 5+(PARAM(1)+PARAM(3))*2;
-		int count = unit == 0 ? unit : (offset - 1)/unit;
-		sprintf(info,"%d:\t%s\n",scan, name);
+		if(offset == -1) {
+			offset = 5 + (PARAM(1) * 2 + PARAM(3)) * 2;
+		}
+		sprintf(info, "%d:\t%s\n", scan, name);
 		angel_out(info);
-		scan += offset;
+		code += offset;
 	}
 	return GETNULL;
 }
