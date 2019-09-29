@@ -17,7 +17,7 @@ ANGEL_API void shell(int argc,char **argv);
 void print(object o);
 void _print(object o);
 void angel_error(char *errorinfo);
-void angel_out(char *out,FILE *f=stdout);
+void angel_out(char *out,FILE *f = stdout);
 void angel_outc(char c,FILE *f=NULL);
 object_ext getcurrentthread();
 

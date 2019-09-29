@@ -14,7 +14,6 @@ extern "c"{
 #define FLAG_HASH_TEST 5
 #define FLAG_HEAPED 6
 
-
 #define ISHEAPINSTACK(o) ((o->flag) == FLAG_STACKHEAP)
 #define ISCONST(o) ((o->flag) == FLAG_CONST)
 #define ISPOOL(o) ((o->flag) == FLAG_POOL)

@@ -2,11 +2,8 @@
 //正则表达式引擎
 /*
 
-
-规则1：全局有一个匹配结果检测，每次匹配到结束时先看有没有栈中保存的足迹，如果有栈中保存的足迹。
-规则2：匹配足迹的构成（or和repeat构成），每次匹配的过程将足迹存储起来。
-规则3：防止原地踏步的情况。
-
+难点1：保证最终的匹配符合greedy和lazy模式
+难点2：保证
 
 */
 
@@ -17,6 +14,7 @@
 #include "lib.h"
 #include "shell.h"
 #include "amem.h"
+
 
 regelement parsereg(object_regular or,wchar end = 0);
 #define reg_base_size 4
@@ -827,6 +825,7 @@ inline int compare_w_char(wchar *pattern,wchar *source,int len)
 #define PARAM(no)  *(int16_t *)(code+no)
 #define ADDOP(op) code += op;
 #define NEXTOP(op) ADDOP(op) goto next;
+
 inline int test_next(char *code,wchar check,state *group_record)
 {
 	int arg1,arg2;
@@ -839,26 +838,28 @@ next:
 	{
 	case CODE_EXIT:
 		return 1;
+	case CODE_REPEAT_RESET:
+		NEXTOP(3);
 	case CODE_UPDATE_ALTERENATION:
 		NEXTOP(3);
 	case CODE_ALTERNATION:
 		NEXTOP(5);
 	case CODE_JUMP:
-		NEXTOP(3);
+		return 1;
 	case CODE_REPEAT_GREEDY:
 	case CODE_REPEAT_GREEDY_CONDITION:
-		NEXTOP(3);
-	case CODE_REPEAT_GREEDY_WITH_ONE:
 		NEXTOP(5);
+	case CODE_REPEAT_GREEDY_WITH_ONE:
+		NEXTOP(7);
 	case CODE_REPEAT_GREEDY_BOTH:
-		NEXTOP(9);
+		NEXTOP(11);
 	case CODE_REPEAT_LAZY:
 	case CODE_REPEAT_LAZY_CONDITION:
-		NEXTOP(3);
-	case CODE_REPEAT_LAZY_WITH_ONE:
 		NEXTOP(5);
+	case CODE_REPEAT_LAZY_WITH_ONE:
+		NEXTOP(7);
 	case CODE_REPEAT_LAZY_BOTH:
-		NEXTOP(9);
+		NEXTOP(11);
 	case CODE_GROUP_CAPTURE_BEGIN://捕获字符串
 		NEXTOP(2);
 	case CODE_GROUP_CAPTURE_END://捕获字符串
@@ -981,15 +982,16 @@ typedef struct codeinfo{
 	char *name;
 	int argoffset,unit;
 };
+
 codeinfo regcode[] = {
 {"CODE_ALTERNATION",3,2},
-{"CODE_REPEAT_GREEDY",3,2},
-{"CODE_REPEAT_GREEDY_WITH_ONE",5,2},
-{"CODE_REPEAT_GREEDY_BOTH",9,2},
+{"CODE_REPEAT_GREEDY",5,2},
+{"CODE_REPEAT_GREEDY_WITH_ONE",7,2},
+{"CODE_REPEAT_GREEDY_BOTH",11,2},
 {"CODE_REPEAT_GREEDY_CONDITION",5,2},
-{"CODE_REPEAT_LAZY",3,2},
-{"CODE_REPEAT_LAZY_WITH_ONE",5,2},
-{"CODE_REPEAT_LAZY_BOTH",9,2},
+{"CODE_REPEAT_LAZY",5,2},
+{"CODE_REPEAT_LAZY_WITH_ONE",7,2},
+{"CODE_REPEAT_LAZY_BOTH",11,2},
 {"CODE_REPEAT_LAZY_CONDITION",5,2},
 {"CODE_CHECK_CHARSET",-1,2}, //5+(arg1+arg2)*2
 {"CODE_JUMP",3,2},
@@ -1012,16 +1014,30 @@ codeinfo regcode[] = {
 };
 
 //在repeat指令处理中，要尽可能的减少pushstate通过预执行下一条指令（如果吓一条是简单的比较指令则不需要pushstate）
+
+
 int reg_match(object_regular or,wchar *source,int begin,int end)
 {
-#define _TEST *(source+scan)
+//设置一个
+#define _TEST *(source + scan)
 #define _SKIP(step) scan += step;
 #define RECALL \
 	do { \
 		stack_pop_flag = 1; \
 		current = popstate(match_state);  \
 		if(current){ \
-			scan = current->index; code = current->pos; isgreedy = current->isgreedy; goto backtobegin; \
+			isgreedy = current->isgreedy; code = current->pos; \
+			scan = current->index; goto backtobegin; \
+		} \
+		else goto exit; \
+	}while(0);
+#define RECALL_EXIT \
+	do { \
+		stack_pop_flag = 1; \
+		current = popstate(match_state);  \
+		if(current){ \
+			scan = current->index; code = current->pos; isgreedy = current->isgreedy; \
+			if(isgreedy) goto backtobegin; else goto exit;\
 		} \
 		else goto exit; \
 	}while(0);
@@ -1030,14 +1046,14 @@ int reg_match(object_regular or,wchar *source,int begin,int end)
 #define PUSHSTATE(offset,isgreedy) if(test_next(code+offset,source[scan],group_record)) pushstate(match_state,scan,code+offset,isgreedy); //注意这里是直接调到下一个指令
 #define PUSHSTATE_REPEAT(offset,duplicate,isgreedy) \
 			do{ \
-				if(repeat_for_duplicate_record[duplicate] != scan || match_state->size == 0)/*只有在一轮repeat后scan有移动才考虑pushstate*/ { \
+				if(repeat_for_duplicate_record[duplicate] < scan)/*只有在一轮repeat后scan有移动才考虑pushstate*/ { \
 					repeat_for_duplicate_record[duplicate] = scan; \
 					PUSHSTATE(offset,isgreedy); \
 				}\
 			}while(0);
 	char *code = or->code->code;
 	int scan = begin;
-	int max_match_pos = 0;
+	int max_match_pos = begin;
 	int repeat_times = 0;
 	int arg1,arg2,arg3;
 	int *match_record = (int *)calloc(or->repeat_item_count,sizeof(int));
@@ -1067,6 +1083,7 @@ int reg_match(object_regular or,wchar *source,int begin,int end)
 	//这两种匹配方向分别是：继续repeat还是跳出repeat
 	//对于greedy再次数允许范围内尽可能尝试继续repeat，lazy模式在次数允许范围内尽可能尝试跳出repeat
 	//所以他们pushstate的操作相差很大。
+
 	while(1)
 	{
 backtobegin:
@@ -1111,7 +1128,7 @@ backtobegin:
 			repeat_times = match_record[arg3];
 			arg1 = PARAM(3);
 			arg2 = PARAM(5);
-			if(!stack_pop_flag){
+			if(!stack_pop_flag) {
 				if(repeat_times >= arg1 && repeat_times <= arg2)
 				{
 					match_record[arg3] = repeat_times+1;
@@ -1132,7 +1149,7 @@ backtobegin:
 		case CODE_REPEAT_LAZY:
 		case CODE_REPEAT_LAZY_CONDITION:
 			arg1 = PARAM(1);
-			PUSHSTATE(0,PARAM(3),0);
+			PUSHSTATE_REPEAT(0,PARAM(3),0);
 			if(isjumpflag) {
 				isjumpflag = 0;
 				code += arg1;
@@ -1150,7 +1167,7 @@ backtobegin:
 				PUSHSTATE_REPEAT(0,PARAM(5),0);
 				if(isjumpflag) {
 					isjumpflag = 0;
-					code += arg1;
+					code += PARAM(3);
 					continue ;
 				}
 			}
@@ -1319,7 +1336,7 @@ complete_charset:
 			{
 				goto exit;
 			}
-			RECALL;
+			RECALL_EXIT;
 		default:
 			angel_error("正则引擎---未知指令！");
 			goto exit;
@@ -1337,6 +1354,7 @@ exit:
 		//清理各种环境
 		return max_match_pos - begin;
 }
+
 object reg_find(object_regular or,wchar *source,int begin,int end)
 {
 	int i = begin;

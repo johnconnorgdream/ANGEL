@@ -1,5 +1,6 @@
 #ifndef amem_def
 #define amem_def
+
 #ifdef _cplusplus
 extern "c"{
 #endif

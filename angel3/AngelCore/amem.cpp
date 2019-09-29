@@ -11,6 +11,8 @@
 
 
 /*
+
+
 添加一个内部的数据类型首先要定义类型宏，实现析构（代码添加到dec_element中）和deep_flag，deep_recovery_angel，实现其他的
 angel语言默认是用utf-8来显示
 towide是转化为同意的宽字符unicode，tomult是转化为统一的utf-8，然后在输出的时候转化为本地编码。
@@ -22,6 +24,7 @@ towide是转化为同意的宽字符unicode，tomult是转化为统一的utf-8，然后在输出的时候转
 字符串和集合的内存机制与对象内存不同，它不是靠空闲列表申请的，而是直接移动指针，回收时直接合并
 后面可以考虑将数据内存的常量放在一起，以后就不用扫描了（page模式）。
 不管时page还是block内存都保存在field结构体中。
+
 关于GC:
 GC是利用引用计数和可达性分析结合的方法，对于对象和集合类型的赋值利用引用计数的方法（考虑到可达性分析扫描代家太大）
 局部变量和全局变量使用可达性分析方法。
@@ -32,6 +35,7 @@ GC是利用引用计数和可达性分析结合的方法，对于对象和集合类型的赋值利用引用计数的方
 回收callable函数可以根据对象是否标记为IS_LOOPED判断对象是否可以回收。
 detect_loop_reference调用之后如果被判断对象是IS_LOOPED则与其相连的所有除了被可达性分析标记的对象都是IS_LOOPED
 如果被判断的对象没有标记为IS_LOOPED需要将中间的临时标记LOOP_CHECK_FLAG变为正常状态（参考recovery_check_flag_to_normal）
+
 GC策略：
 block模式下的gc与page模式下的gc策略有不同。
 block_gc有三个范围gc：普通gc（只对新增的field进行gc）周期gc（目前是每5次新增field(新增feild的触发条件见gc_block函数)，每次从field_head开始扫描）
@@ -44,6 +48,7 @@ gc回收利用内存移动，但都是对field内部的内存移动，field之间没有内存移动，所以每次
 
 cycle GC存在的合理性
 cycle可能会拖慢系统的速度
+
 */
 
 static angel_memry angel_object_heap,angel_data_heap;
@@ -327,7 +332,7 @@ void* angel_alloc_page(object head,int len)
 	MEM_LOCK
 	if(allocsize > max_page_size/2)  //巨大的内存申请
 	{
-		if(angel_data_heap->extend_size > max_page_size*20)
+		if(angel_data_heap->extend_size > max_page_size*5)
 			page_extend_gc(); 
 		field f = init_page_field(allocsize);
 		res = (page)f->memry;
@@ -594,7 +599,6 @@ inline void _flag(object o)
 	ASCREF(o);
 }
 int deep_flag(object p)
-
 {
 	//注意本内存系统的引用计数加减与回收分两个不同阶段做
 	if(ISFLAGED(p))
@@ -675,7 +679,8 @@ int recovery_check_flag_to_normal(object o)
 }
 
 
-int block_gc_count= 0;
+int block_gc_count = 0;
+block test_block;
 inline int callable(object o,int mode)
 {
 	if(mode == 1)
@@ -755,6 +760,10 @@ recycle:
 				freesize = p-(char *)_free;
 				if(freesize >= MINSIZE)
 				{
+					if(freesize == 32)
+					{
+						test_block = _free;
+					}
 					_free->block_size = freesize;
 					ADDFREELIST_O(_free);
 				}

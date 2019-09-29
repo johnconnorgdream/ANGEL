@@ -28,12 +28,7 @@ solution(len,l,ki){
 	ret return
 }
 
-
-i = 0
-l = [1,2,3,4,5,6,7,8,9,10]
-s = 'adad'
-a = 'adhauh'
-
+print(fabonacii(33))
 /*
 while(i  <  100000000) 
 {
@@ -41,7 +36,6 @@ while(i  <  100000000)
 	l[i % 10] = l[(i+1) % 10]
 	//s = s + 'asda'
 }
-*/
 //l = [-2, 0, 1, 2, 3, 6]*90
 //print(solution(l.size(),l,2).size())
 len = l.size()

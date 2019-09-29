@@ -10,7 +10,7 @@ object_fun init_function(void *fp,int flag)
 {
 	object_fun f = (object_fun)angel_alloc_block(APPLYSIZE(sizeof(object_funnode)));
 	f->type=FUNP;
-	f->extra_flag = flag;
+	f->flag = flag;
 	switch(flag)
 	{
 	case UNCERTAIN_USER:
@@ -61,7 +61,7 @@ void *dynamic_call(object_fun f,int16_t count)
 	fun fp;
 	angel_buildin_func *lib;
 	
-	switch(f->extra_flag)
+	switch(f->flag)
 	{
 	case UNCERTAIN_USER:
 		fp = f->funinfo.user;

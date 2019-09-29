@@ -617,12 +617,14 @@ loadindex:
 					uchar testc = *(pc+7);
 					if(!testc)
 					{
-						TEMP((object)slicelist(GETLIST(left),GETRANGE(right)));
+						right = (object)slicelist(GETLIST(left),GETRANGE(right));
 					}
 					else
 					{
-						TEMP((object)initslice(left,GETRANGE(right)));
+						right = (object)initslice(left,GETRANGE(right));
 					}
+					TEMP(right);
+					EXIT_SECURE;
 				}
 				break ;
 			case STR:  //如果是字符常量直接用字符池最多有256*256个
@@ -636,12 +638,14 @@ loadindex:
 					uchar testc = *(pc+7);
 					if(!testc)
 					{
-						TEMP((object)slicestring(GETSTR(left),GETRANGE(right)));
+						right = (object)slicestring(GETSTR(left),GETRANGE(right));
 					}
 					else
 					{
-						TEMP((object)initslice(left,GETRANGE(right)));
+						right = (object)initslice(left,GETRANGE(right));
 					}
+					TEMP(right);
+					EXIT_SECURE;
 				}
 				break ;
 			case BYTES:  //如果是字符常量直接用字符池最多有256*256个
@@ -656,12 +660,14 @@ loadindex:
 					uchar testc = *(pc+7);
 					if(!testc)
 					{
-						TEMP((object)slicebytes(GETBYTES(left),GETRANGE(right)));
+						right = (object)slicebytes(GETBYTES(left),GETRANGE(right));
 					}
 					else
 					{
-						TEMP((object)initslice(left,GETRANGE(right)));
+						right = (object)initslice(left,GETRANGE(right));
 					}
+					TEMP(right);
+					EXIT_SECURE;
 				}
 				break ;
 			case DICT:
@@ -2131,7 +2137,8 @@ init_range:
 			goto exit;
 		}
 
-next:;
+next:
+		;
 	}
 exit:
 	freeenv(env_reg);

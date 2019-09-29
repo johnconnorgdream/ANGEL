@@ -191,6 +191,7 @@ object_string slicestring(object_string s,object_range range)
 		int index = b + i*step;
 		*in++ = out[index];
 	}
+	*in++ = 0;
 	return res;
 }
 void joinstring(object_string ret,object join)  //这里要保证空间足够
@@ -305,13 +306,15 @@ object sysfind_string(object pattern,object range,object o)
 	if(ISREGULAR(regular))  //表示此时是正则表达式
 	{
 		ret = reg_find(GETREGULAR(regular),(wchar *)GETSTR(o)->s,res[0],res[1]);
+		if(!ISREGULAR(pattern)) {
+			DECREF(regular);
+		}
 	}
 	else
 	{
 		ret = strfind((wchar *)GETSTR(o)->s,(wchar *)GETSTR(pattern)->s,
 			res[0],res[1],GETSTR(pattern)->len/2);
 	}
-	DECREF(regular);
 	return ret;
 }
 object sysfindall_string(object pattern,object range,object o)
@@ -332,13 +335,15 @@ object sysfindall_string(object pattern,object range,object o)
 	if(ISREGULAR(regular))  //表示此时是正则表达式
 	{
 		ret = reg_findall(GETREGULAR(regular),(wchar *)GETSTR(o)->s,res[0],res[1]);
+		if(!ISREGULAR(pattern)) {
+			DECREF(regular);
+		}
 	}
 	else
 	{
 		ret = strfindall((wchar *)GETSTR(o)->s,(wchar *)GETSTR(pattern)->s,
 			res[0],res[1],GETSTR(pattern)->len/2);
 	}
-	DECREF(regular);
 	return ret;
 }
 object sysmatch_string(object pattern,object range,object o)
@@ -357,6 +362,8 @@ object sysmatch_string(object pattern,object range,object o)
 	}
 	object ret = (object)initinteger(reg_match(GETREGULAR(regular),(wchar *)GETSTR(o)->s,
 		res[0],res[1]));
-	DECREF(regular);
+	if(!ISREGULAR(pattern)) {
+		DECREF(regular);
+	}
 	return ret;
 }

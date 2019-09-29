@@ -1,4 +1,4 @@
-﻿//lib algo
+//lib algo
 
 //一加上下面的定义去掉lib algo之后就速度很慢
 
@@ -21,11 +21,11 @@ addmatrix(a,b)
 	res=[]
 	if(!ismatrix(b) || !ismatrix(b))
 	{
-		print('¾ØÕó¼Ó·¨ÀàÐÍ²»ºÏ·¨')
+		print('error')
 		ret []
 	}
 	if(a.size()!=b.size()){
-		print('¾ØÕó¼Ó·¨ÒªÓÐÏàÍ¬µÄÐÐÊý£¡')
+		print('error')
 		ret []
 	}
 	for(i=0 i<a.size() i++)
@@ -35,11 +35,11 @@ addmatrix(a,b)
 		{
 			if(type(a[i])!='array' || type(b[i])!='array')
 			{
-				print('¾ØÕóÏà¼ÓÀàÐÍ²»ºÏ·¨£¡')
+				print('error')
 				ret []
 			}
 			if(a[i].size() != b[i].size()) {
-				print('¾ØÕó¼Ó·¨ÒªÓÐÏàÍ¬µÄÐÐÊý£¡')
+				print('error')
 				ret []
 			}
 			row.add(a[i][j]+b[i][j])

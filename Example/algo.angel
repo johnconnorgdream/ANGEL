@@ -82,7 +82,7 @@ multmatrix(a,b)
 			ret []
 		}
 		for(k=0 k<bc k++){
-			for(j=0 j<br j++)
+			for(j=0 j < br j++)
 				total = total + a[i][j]*b[j][k]
 			row.add(total)
 		}
@@ -322,6 +322,7 @@ class btree{
 			//要从上面拿一个下来
 			//表示此时是左
 			child2 = p.children[i+1]
+
 			if(child2.size == n-1) {
 				//合并child与child1
 				child.keys[child.size] = p.keys[i]

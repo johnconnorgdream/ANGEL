@@ -58,10 +58,11 @@ void addcollection(collection base,void *el)
 }
 void clearcollection(collection c)
 {
-	for(int i = 0; i < c->size; i++)
+	for(int i = 0; i < c->alloc; i++)
 	{
 		free(c->element[i]);
 	}
+	free(c->element);
 	free(c);
 }
 
