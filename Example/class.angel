@@ -133,14 +133,12 @@ class manager
 					val=scan()
 					printl('当前对象为'+val)
 				}
-				for(p=this.s p p=p.next)
+				for(p=this.s; p; p=p.next)
 				{
 					if(type=='unit')
 						break 
-					else if(type=='major')
-					{
-						if(p.getmajor()==val)
-						{
+					else if(type=='major') {
+						if(p.getmajor()==val) {
 							s='id is '+p.getid()+'\t name is '+p.getname()+'\t major is '+p.major
 							printl(s)
 						}
@@ -267,13 +265,11 @@ class student
 		}
 	}
 }
-printtest(a,b=2)
-{
+printtest(a,b=2) {
 	while(a > 0)
 	{
 		begin = b++
-		while(b < 1000000000)
-		{
+		while(b < 1000000000) {
 			a -= 1;
 			b += a--
 		}
@@ -455,8 +451,34 @@ t = timer((){
 	printl('慢慢的这种实现方式被发现是蛋疼且低效的。但当大家试图去拆分和去除GIL的时候，发现大量库代码开发者已经重度依赖GIL而非常难以')
 },1000)
 */
-print('hahah')
-sleep(2000);
+
+s = 'adad'
+l = [1,s]
+
+cc = 0
+cc += 'tongmadai'+1
+
+i = 0
+while(i < 30000000) {
+	i = i + 1
+	//s = i + 2
+}
+
+print('Rete: A fast algorithm for cc many pattern/many object pattern match problem')
+
+//语法扩展，mutex，sync等
+//将函数的概念抽象成语句块的概念，平时普通定义的函数就是明确了传参和
+print_r(s){
+	print('\n')
+	print(s)
+	print('\n')
+}
+sync()
+sync() {
+	print_r('Tecent')
+}
+
+/*
 startthread($printtest,[times,4])
 startthread($printtest,[times,4])
 startthread($printtest,[times,4])

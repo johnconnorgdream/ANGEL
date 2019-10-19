@@ -20,33 +20,35 @@ extern "c"{
 #define TYPE_REF 8
 #define TYPE_ALL 9
 
-#define CODE_ALTERNATION 1
-#define CODE_REPEAT_GREEDY 2
-#define CODE_REPEAT_GREEDY_WITH_ONE 3
-#define CODE_REPEAT_GREEDY_BOTH 4
-#define CODE_REPEAT_GREEDY_CONDITION 5
-#define CODE_REPEAT_LAZY 6
-#define CODE_REPEAT_LAZY_WITH_ONE 7
-#define CODE_REPEAT_LAZY_BOTH 8
-#define CODE_REPEAT_LAZY_CONDITION 9
-#define CODE_CHECK_CHARSET 10
-#define CODE_JUMP 11
-#define CODE_CHAR 12
-#define CODE_REF 13
-#define CODE_ALL 14
-#define CODE_GROUP_CAPTURE_BEGIN 15
-#define CODE_GROUP_CAPTURE_END 16
-#define CODE_MATCH_BOUNDARY 17
-#define CODE_MATCH_NOT_BOUNDARY 18
-#define CODE_MATCH_DIGITAL 19
-#define CODE_MATCH_NOT_DIGITAL 20
-#define CODE_MATCH_WORD 21
-#define CODE_MATCH_NOT_WORD 22
-#define CODE_MATCH_SPACE 23
-#define CODE_MATCH_NOT_SPACE 24
-#define CODE_EXIT 25
-#define CODE_UPDATE_ALTERENATION 26
-#define CODE_REPEAT_RESET 27
+
+#define CODE_GROUP_CAPTURE_BEGIN 1
+#define CODE_GROUP_CAPTURE_END 2
+#define CODE_ALTERNATION 3
+#define CODE_UPDATE_ALTERENATION 4
+#define CODE_REPEAT_GREEDY 5
+#define CODE_REPEAT_GREEDY_WITH_ONE 6
+#define CODE_REPEAT_GREEDY_BOTH 7
+#define CODE_REPEAT_GREEDY_CONDITION 8
+#define CODE_REPEAT_LAZY 9
+#define CODE_REPEAT_LAZY_WITH_ONE 10
+#define CODE_REPEAT_LAZY_BOTH 11
+#define CODE_REPEAT_LAZY_CONDITION 12
+#define CODE_REPEAT_RESET 13
+
+#define CODE_JUMP 14
+#define CODE_EXIT 15
+#define CODE_CHECK_CHARSET 16
+#define CODE_CHAR 17
+#define CODE_REF 18
+#define CODE_ALL 19
+#define CODE_MATCH_BOUNDARY 20
+#define CODE_MATCH_NOT_BOUNDARY 21
+#define CODE_MATCH_DIGITAL 22
+#define CODE_MATCH_NOT_DIGITAL 23
+#define CODE_MATCH_WORD 24
+#define CODE_MATCH_NOT_WORD 25
+#define CODE_MATCH_SPACE 26
+#define CODE_MATCH_NOT_SPACE 27
 #define CODE_CHECK_NOT_CHARSET 28
 
 
@@ -88,10 +90,13 @@ typedef struct object_regularnode{
 	int16_t group_count;
 	bytecode code;
 	wchar *pattern;
-	int32_t *or_jump_set;
+	int16_t *or_jump_set;
 	int16_t repeat_count,alternation_count,repeat_item_count;
 	int32_t *match_record,*repeat_for_duplicate_record;
-	statenode *group;
+	state *group;
+	collection repeat_predict_set;
+
+
 	collection match_state;
 }*object_regular;
 object_regular are_compile(wchar *pattern);

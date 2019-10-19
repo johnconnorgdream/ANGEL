@@ -597,8 +597,10 @@ void compile_repeat(regelement el,object_regular or)
 		}
 	}
 	write = bc->len;
+	addcollection(or->repeat_predict_set,bc->code + write);
 	bc->len += 2;  //这是填充跳跃的字段
 	ADDWORD(or->repeat_count++);
+	
 	compile_element(el->attr.repeat.unit,or);
 	int offset = bc->len - begin;
 	if(flag == 0)
@@ -758,6 +760,55 @@ int compile_element(regelement el,object_regular or)
 	}
 	return 1;
 }
+
+
+#define PARAM(no)  *(int16_t *)(code+no)
+#define ADDOP(op) code += op;
+#define NEXTOP(op) ADDOP(op) goto next;
+char *_initpredict(char *code)
+{
+next:
+	switch(*code)
+	{
+	case CODE_REPEAT_RESET:
+		NEXTOP(3);
+	case CODE_UPDATE_ALTERENATION:
+		NEXTOP(3);
+	case CODE_ALTERNATION:
+		NEXTOP(5);
+	case CODE_REPEAT_GREEDY:
+	case CODE_REPEAT_GREEDY_CONDITION:
+		NEXTOP(5);
+	case CODE_REPEAT_GREEDY_WITH_ONE:
+		NEXTOP(7);
+	case CODE_REPEAT_GREEDY_BOTH:
+		NEXTOP(11);
+	case CODE_REPEAT_LAZY:
+	case CODE_REPEAT_LAZY_CONDITION:
+		NEXTOP(5);
+	case CODE_REPEAT_LAZY_WITH_ONE:
+		NEXTOP(7);
+	case CODE_REPEAT_LAZY_BOTH:
+		NEXTOP(11);
+	case CODE_GROUP_CAPTURE_BEGIN://捕获字符串
+		NEXTOP(2);
+	case CODE_GROUP_CAPTURE_END://捕获字符串
+		NEXTOP(2);
+	default:
+		return code;
+	}
+}
+void initpredict(object_regular or)
+{
+	int arg1,arg2;
+	wchar *charset;
+	state current;
+	//这个是在做repeat匹配的时候判断是否要做pushstate
+	collection predict = or->repeat_predict_set;
+	for(int i = 0; i < predict->size; i++){
+		predict->element[i] = _initpredict((char *)predict->element[i]);
+	}
+}
 object_regular are_compile(wchar *pattern) //编译模式串
 {
 	bytecode bc = initbytearray();
@@ -772,13 +823,19 @@ object_regular are_compile(wchar *pattern) //编译模式串
 	regelement root = parsereg(ret,'/');
 	if(root == NULL) return NULL;
 	if(ret->alternation_count > 0)
-		ret->or_jump_set = (int *)calloc(ret->alternation_count,sizeof(int));
+		ret->or_jump_set = (int16_t *)calloc(ret->alternation_count,sizeof(int16_t));
 	ret->alternation_count = 0;
+	ret->repeat_predict_set = initcollection();
 	compile_element(root,ret);
 	ADDBYTE(CODE_EXIT);
 	ret->match_record = (int *)calloc(ret->repeat_item_count,sizeof(int));
 	ret->repeat_for_duplicate_record = (int *)calloc(ret->repeat_count,sizeof(int));
-	ret->group = (statenode *)calloc(100,sizeof(statenode));
+	initpredict(ret);
+	ret->group = (state *)calloc(100,sizeof(state));
+	void *res = calloc(100,sizeof(statenode));
+	for(int i = 0; i < 100; i++){
+		ret->group[i] = &((statenode *)res)[i];
+	}
 	ret->match_state = initcollection();
 	return ret;
 }
@@ -825,48 +882,18 @@ inline int compare_w_char(wchar *pattern,wchar *source,int len)
 	}
 	return 1;
 }
-#define PARAM(no)  *(int16_t *)(code+no)
-#define ADDOP(op) code += op;
-#define NEXTOP(op) ADDOP(op) goto next;
 
 inline int test_next(char *code,wchar check,state *group_record)
 {
 	int arg1,arg2;
 	wchar *charset;
 	state current;
-
 	//这个是在做repeat匹配的时候判断是否要做pushstate
-next:
 	switch(*code)
 	{
+	case CODE_JUMP:
 	case CODE_EXIT:
 		return 1;
-	case CODE_REPEAT_RESET:
-		NEXTOP(3);
-	case CODE_UPDATE_ALTERENATION:
-		NEXTOP(3);
-	case CODE_ALTERNATION:
-		NEXTOP(5);
-	case CODE_JUMP:
-		return 1;
-	case CODE_REPEAT_GREEDY:
-	case CODE_REPEAT_GREEDY_CONDITION:
-		NEXTOP(5);
-	case CODE_REPEAT_GREEDY_WITH_ONE:
-		NEXTOP(7);
-	case CODE_REPEAT_GREEDY_BOTH:
-		NEXTOP(11);
-	case CODE_REPEAT_LAZY:
-	case CODE_REPEAT_LAZY_CONDITION:
-		NEXTOP(5);
-	case CODE_REPEAT_LAZY_WITH_ONE:
-		NEXTOP(7);
-	case CODE_REPEAT_LAZY_BOTH:
-		NEXTOP(11);
-	case CODE_GROUP_CAPTURE_BEGIN://捕获字符串
-		NEXTOP(2);
-	case CODE_GROUP_CAPTURE_END://捕获字符串
-		NEXTOP(2);
 	case CODE_CHECK_CHARSET:
 		//CODE_CHECK_CHARSET匹配到以后要判断CODE_CHECK_RANGE是否有匹配
 		arg1 = PARAM(1);  //range size
@@ -876,6 +903,7 @@ next:
 		{
 			if(check >= charset[i] && check <= charset[i+1])
 			{
+_success:
 				return 1;
 			}
 		}
@@ -884,7 +912,7 @@ next:
 		{
 			if(check == charset[j])
 			{
-				return 1;
+				goto _success;
 			}
 		}
 		return 0;
@@ -908,13 +936,13 @@ next:
 				return 0;
 			}
 		}
-		return 1;
+		goto _success;
 	case CODE_CHAR:
 		if(PARAM(1) != check)
 		{
 			return 0;
 		}
-		return 1;
+		goto _success;
 	case CODE_REF:
 		arg1 = *(code+1)-1;  //向后引用
 		current = group_record[arg1];
@@ -922,61 +950,61 @@ next:
 		{
 			return 0;
 		}
-		return 1;
+		goto _success;
 	case CODE_ALL:
 		if(check == '\n')
 		{
 			return 0;
 		}
-		return 1;
+		goto _success;
 	case CODE_MATCH_BOUNDARY:
 		if(ISWCHARWORD(check))
 		{
 			return 0;
 		}
-		return 1;
+		goto _success;
 	case CODE_MATCH_NOT_BOUNDARY:
 		if(!ISWCHARWORD(check))
 		{
 			return 0;
 		}
-		return 1;
+		goto _success;
 	case CODE_MATCH_DIGITAL:
 		if(!ISWCHARNUM(check))
 		{
 			return 0;
 		}
-		return 1;
+		goto _success;
 	case CODE_MATCH_NOT_DIGITAL:
 		if(ISWCHARNUM(check))
 		{
 			return 0;
 		}
-		return 1;
+		goto _success;
 	case CODE_MATCH_WORD:
 		if(!ISWCHARWORD(check))
 		{
 			return 0;
 		}
-		return 1;
+		goto _success;
 	case CODE_MATCH_NOT_WORD:
 		if(ISWCHARWORD(check))
 		{
 			return 0;
 		}
-		return 1;
+		goto _success;
 	case CODE_MATCH_SPACE:
 		if(!ISWCHARSPACE(check))
 		{
 			return 0;
 		}
-		return 1;
+		goto _success;
 	case CODE_MATCH_NOT_SPACE:
 		if(ISWCHARSPACE(check))
 		{
 			return 0;  //可以偷懒了
 		}
-		return 1;
+		goto _success;
 	}
 	return 1;
 }
@@ -1038,12 +1066,18 @@ int reg_match(object_regular or,wchar *source,int begin,int end)
 	}while(0);
 #define IFEND if(scan > end) {RECALL;}
 #define NEXT  IFEND check = source[scan++];
-#define PUSHSTATE(offset,isgreedy) if(test_next(code+offset,source[scan],group_record)) pushstate(match_state,scan,code+offset,isgreedy); //注意这里是直接调到下一个指令
-#define PUSHSTATE_REPEAT(offset,duplicate,isgreedy) \
+#define PUSHSTATE(offset,isgreedy,backup)  \
 			do{ \
-				if(repeat_for_duplicate_record[duplicate] < scan)/*只有在一轮repeat后scan有移动才考虑pushstate*/ { \
+				char *test = repeat_backup_set[backup]; \
+				if(test_next(test,source[scan],group_record)) { \
+					pushstate(match_state,scan,code + offset,isgreedy); \
+				} \
+			}while(0);
+#define PUSHSTATE_REPEAT(offset,duplicate,isgreedy) \
+			do{/*只有在一轮repeat后scan有移动才考虑pushstate，这是整个正则引擎中最有疑点的*/\
+				if(repeat_for_duplicate_record[duplicate] < scan) { \
 					repeat_for_duplicate_record[duplicate] = scan; \
-					PUSHSTATE(offset,isgreedy); \
+					PUSHSTATE(offset,isgreedy,duplicate); \
 				}\
 			}while(0);
 	char *code = or->code->code;
@@ -1052,18 +1086,19 @@ int reg_match(object_regular or,wchar *source,int begin,int end)
 	int repeat_times = 0;
 	int arg1,arg2,arg3;
 	int *match_record = or->match_record;
-	memset(match_record,0,sizeof(int)*or->repeat_item_count);
 	int *repeat_for_duplicate_record = or->repeat_for_duplicate_record;
-	memset(repeat_for_duplicate_record,0,sizeof(int)*or->repeat_count);
+	for(int i = 0; i < or->repeat_item_count; i++)	match_record[i] = 0;
+	
+	char **repeat_backup_set = (char **)or->repeat_predict_set->element;
+
+	for(int i = 0; i < or->repeat_count; i++) repeat_for_duplicate_record[i] = 0;
+
 	wchar check;
 	wchar *charset;
 	collection match_state = or->match_state;
 	match_state->size = 0;
-	state group_record[100];
-	for(int i = 0; i < 100; i++)
-	{
-		group_record[i] = &or->group[i];
-	}
+	state *group_record = or->group;
+
 	//标志着当前是从stack中pop出来的repeat单元，主要是为了防止次数限制重复的repeat操作
 	int stack_pop_flag = 0;
 	int isgreedy = 1;
@@ -1072,7 +1107,7 @@ int reg_match(object_regular or,wchar *source,int begin,int end)
 	//current_sate即表示当前在哪个最外层的repeat context下的
 	state current;
 	char *codebase = or->code->code;
-	int32_t *jump_set = or->or_jump_set;
+	int16_t *jump_set = or->or_jump_set;
 
 	int match_size;
 	int ret = 0;
@@ -1353,8 +1388,8 @@ next:
 		;
 	}
 exit:
-		//清理各种环境
-		return max_match_pos - begin;
+	//清理各种环境
+	return max_match_pos - begin;
 }
 
 object reg_find(object_regular or,wchar *source,int begin,int end)
@@ -1376,17 +1411,18 @@ object reg_findall(object_regular or,wchar *source,int begin,int end)
 	int i = begin;
 	object_list ret = initarray();
 
-
 	while(i < end)
 	{
+		//为了考虑减少时间开销，可以通过各种方式减少reg_match函数的调用次数
 		int matchsize = reg_match(or,source,i,end);
 		if(matchsize > 0)  //表示没有匹配到
 		{
 			object_range item = initrange(i,i+matchsize-1);
-			
+			//
 			_addlist(ret,(object)item);
 		}
 		i += (matchsize == 0 ? 1 : matchsize);
+		//printf("%d\n",i);
 	}
 	
 	return (object)ret;

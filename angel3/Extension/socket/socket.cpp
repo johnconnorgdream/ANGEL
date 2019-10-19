@@ -233,52 +233,103 @@ object syssclose(object s)
 	else
 		return GETTRUE;
 }
-object sysnetaddr(object hostinfo)
+object sysnetaddr(object hostname,object servername)
 {
-	ARG_CHECK(hostinfo,LIST,"netaddr",1);
-	
-	char *hostname,*servername;
-	if(ISSTR(GETLIST(hostinfo)->item[0]))
+#define HOST_LEN 100
+	char *_hostname = NULL;
+	char *_servername = NULL;
+	if(!ISDEFAULT(hostname))
 	{
-		hostname = tomult(GETSTR(GETLIST(hostinfo)->item[0]));
+		ARG_CHECK(hostname,STR,"netaddr",1);
+		if(comparestring(GETSTR(hostname),CONST("localhost")) == 0) 
+		{
+			goto localaddr;
+		}
+		else
+		{
+			_hostname = tomult(GETSTR(hostname));
+		}
+		if(!ISDEFAULT(servername))
+		{
+			ARG_CHECK(servername,STR,"netaddr",2);
+			_hostname = tomult(GETSTR(hostname));
+			_servername = tomult(GETSTR(servername));
+		}
 	}
 	else
 	{
-		angel_error("主机名必须是字符串类型！");
-		return GETNULL;
+localaddr:
+		_hostname = (char *)calloc(HOST_LEN,sizeof(char));
+		gethostname(_hostname,HOST_LEN);
 	}
-	if(ISSTR(GETLIST(hostinfo)->item[1]))
-	{
-		servername = tomult(GETSTR(GETLIST(hostinfo)->item[1]));
-	}
-	else
-	{
-		angel_error("服务名必须是字符串类型！");
-		return GETNULL;
-	}
-	addrinfo hints,*res;
+	addrinfo hints, *res;
 	memset(&hints, 0, sizeof(struct addrinfo));
     hints.ai_family = AF_INET;     /* Allow IPv4 */
     hints.ai_flags = AI_PASSIVE;/* For wildcard IP address */
     hints.ai_protocol = 0;         /* Any protocol */
     hints.ai_socktype = SOCK_STREAM;
 
-
-	if(getaddrinfo(hostname,servername,&hints,&res)!=0)
-		return NULL;
-
-	object_list ret = initarray();
+	
+	object_list ret = (object_list)GETNULL;
+	if(getaddrinfo(_hostname,_servername,&hints,&res) != 0)
+	{
+		goto ret;
+	}
+	
+	ret = initarray();
 	for(addrinfo * p = res; p; p=p->ai_next)
 	{
-		object_list item = initarray();
+		object_list item = initarray(2);
 		_addlist(ret,(object)item);
 		SOCKADDR_IN *addr=(SOCKADDR_IN *)p->ai_addr;
 		_addlist(item,(object)initstring(inet_ntoa(addr->sin_addr)));
 		_addlist(item,(object)initinteger(ntohs(addr->sin_port)));
 	}
+ret:
+	free(_hostname);
+	if(_servername) free(_servername);
 	return (object)ret;
 }
+object sysnetname(object ip)
+{
+#define HOST_LEN 100
+	char *hostname = NULL;
 
+	if(!ISDEFAULT(ip))
+	{
+		ARG_CHECK(ip,STR,"netname",1);
+		if(comparestring(GETSTR(ip),CONST("localhost")) == 0) 
+		{
+			goto localname;
+		}
+		else
+		{
+			char *_ip = tomult(GETSTR(ip));
+			in_addr ina;
+			ina.S_un.S_addr = inet_addr(_ip);
+			free(_ip);
+			hostent *h = gethostbyaddr((char *)&ina,4,AF_INET);
+			if(h)
+				return (object)initstring(h->h_name);
+			else
+				return GETNULL;
+		}
+	}
+	else
+	{
+localname:
+		hostname = (char *)calloc(HOST_LEN,sizeof(char));
+		gethostname(hostname,HOST_LEN);
+		object_string ret = initstring(hostname);
+		free(hostname);
+		return (object)ret;
+	}
+}
+object syssocketopt(object sock,object opt)
+{
+
+	return GETNULL;
+}
 
 /*
 

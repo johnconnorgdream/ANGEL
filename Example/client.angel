@@ -1,6 +1,6 @@
 ﻿
 s = socket('tcp')
-if(connect(s,['172.21.220.183',3300]))
+if(connect(s,[netaddr()[0][0],3300]))
 {
 	print('连接成功！')
 }

@@ -1,15 +1,22 @@
 lib a
+
 res = []
 //r = regular('/\t(\w)+/')
+
 r = regular('/\[(,*(\[(,*\d+)*\])+)*\]/')
-//r = regular('/[\{\},\/\*]|if|else|while|ret|for|class|continue|false/')  //目前没有python快的原因是我所有的alternative都是严格按照指令运行，没有考虑到优化问题
-s = readfile('f:\\visual studio2010\\vc\\文件\\math.angel')
-s *= 100
+//目前没有python快的原因是我所有的alternative都是严格按照指令运行，没有考虑到优化问题
+
+r = regular('/[\{\},\/\*]|if|else|while|ret|for|class|continue|false/')
+
+s = readfile('f:\\visual studio2010\\vc\\文件\\斗鱼.html')*100
+
+ms = s.findall('/<.*>/')
 //ms = s.findall(r)
-//print(ms.size())
+printl(ms.size())
+//for(item in ms) printl(s[item])
+//ms = s.findall(r)
 
-
-
+/*
 r = regular('/(acd)+/')
 //print(s)
 
@@ -19,12 +26,18 @@ s = 'acd' * eachtimes
 
 ms = s.find(r)
 print(ms)
-//for(item in ms) print(s[item])
-/*
-ms = s.findall(r)
-for(item in ms)
-	print(s[item])
-/*
+
 for(item in ms) {
 	print(s[item])
+}
+
+
+/*
+ms = s.findall(r)
+for(item in ms) {
+	print(s[item])
+}
+
+for(item in ms) {
+	print( s[item] )
 }

@@ -1,6 +1,6 @@
 ﻿i=0
 s = socket('tcp')
-bind(s,['172.21.220.183',3300])
+bind(s,[netaddr()[0][0],3300])
 listen(s,10)
 from = []
 ss = accept(s,from)
@@ -12,16 +12,7 @@ else{
 	print('连接到'+from[0]+' : '+from[1])
 	sleep(1000)
 	send(ss,'2332'*10000)
-	startthread((s){
-		while(true)
-		{
-			content = recv(s)
-			if(content == null)
-				break
-			else
-				printl(content)
-		}
-	},[ss])
+	
 	while(true){
 		sc = scan()
 		res = send(ss,sc)

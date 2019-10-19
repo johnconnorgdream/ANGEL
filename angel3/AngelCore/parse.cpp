@@ -1682,7 +1682,7 @@ void addsetencetoroot(token root,token exp,fun f)
 	addtoken(roottemp,exp);
 }
 token dealtoken(int flag,int *i,fun f)  //这仅仅是主程序语法产生的语法树。
-{ 
+{
 //scope_parallel_num是控制语句中的局部变量的水平空间，而每个token里放的是垂直空间，每个垂直空间呈递给上一级的水平空间	
 //#define SET_SCOPE_VALUE_INDEX_BEGIN(st) if(scopet) st->s_extra = scopet->s_extra; else st->s_extra = -1;
 #define ISPARSEASLIB (!global_class_env && !f && islib == 1)
@@ -1966,6 +1966,11 @@ token dealtoken(int flag,int *i,fun f)  //这仅仅是主程序语法产生的语法树。
 			}
 			else if(temp->id == FOR)
 			{
+				if(t[*i]->id != LBRACKETL)
+				{
+					angel_error("for语句需要缺少(");
+					return NULL;
+				}
 				(*i)++;
 				int error=dealforbracket(*i);
 				if(error == -1)

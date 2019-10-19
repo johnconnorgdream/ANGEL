@@ -266,14 +266,14 @@ int counttempvar()
 runtime_stack initruntime(int stacksize)
 {
 	unsigned long i;
-	runtime_stack rs=(runtime_stack)malloc(sizeof(runtime_stacknode));
+	runtime_stack rs = (runtime_stack)malloc(sizeof(runtime_stacknode));
 	rs->stack_size = stacksize;
 
-	int total_alloc = rs->stack_size*sizeof(object)+rs->stack_size*stack_heap_size;
+	int total_alloc = (stacksize * sizeof(object) + stacksize * stack_heap_size);
 	rs->data = (object *)malloc(total_alloc);
 
 	//将栈的内容初始化为angel_uninitial
-	memset(rs->data,0,total_alloc);
+	memset(rs->data, 0, total_alloc);
 	for(i = 0; i < stacksize; i++)
 		rs->data[i] = angel_uninitial;
 
@@ -282,11 +282,10 @@ runtime_stack initruntime(int stacksize)
 	rs->push_pos = angel_temp->inuse;
 	rs->top = rs->push_pos;
 	//stack底部的存储整数的缓冲
-	for(i = 0; i<rs->stack_size; i++)
-	{
+	for(i = 0; i < rs->stack_size; i++) {
 		object_int temp = GETSTACKHEAPASINT(base,i);
 		temp->flag = FLAG_STACKHEAP;
-		temp->osize = stack_heap_size;
+		temp->osize = NUMSIZE;
 	}
 	return rs;
 }

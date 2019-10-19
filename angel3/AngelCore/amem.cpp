@@ -282,7 +282,10 @@ void reset_heap()
 	reset_data_heap();
 }
 
-
+void angel_init(object o)
+{
+	memset(o+1,0,sizeof(object)-4);
+}
 
 
 
@@ -423,6 +426,8 @@ __forceinline void dec_element(object p,int mode = 0)
 		}
 		return ;
 	case REGULAR:
+		free(GETREGULAR(p)->repeat_predict_set->element);
+		free(GETREGULAR(p)->repeat_predict_set);
 		freebytecode(GETREGULAR(p)->code);
 		free(GETREGULAR(p)->group);
 		free(GETREGULAR(p)->or_jump_set);
@@ -521,9 +526,8 @@ void traversal_root(void (*deal)(object o,int mode),int mode = 0)
 void deal_deep(object o,int (*deal)(object o))  //deal返回是否可以递归
 {
 	//注意本内存系统的引用计数加减与回收分两个不同阶段做
-#define PUSHIT(o) do{ if(o) addcollection(angel_traversal_stack,o); }while(0);
+#define PUSHIT(o) do{ if(o)addcollection(angel_traversal_stack,o); }while(0);
 #define POPIT do{p = (object)popcollection(angel_traversal_stack); if(!p) return ;}while(0);
-
 
 	object p;
 	PUSHIT(o)
@@ -651,7 +655,6 @@ void recovery_angel_flag(int mode)  //即判断是否是当前的
 }
 int detect_loop_reference(object o)
 {
-	
 	//注意，没有被flag的对象有两类，
 	//一类是申请的中间对象还没来得及挂上引用，还有一种就是循环引用没来得及释放
 	if(ISFLAGED(o))  //不要从这个方向检测了，检测不到循环引用的

@@ -1,23 +1,18 @@
 lib a
+l = []
 lsbytype(base,type) {
-	printl(base)
-	ls = fls(base+'*.*')
+	ls = fls(base+'*.*');
 	for(item in ls) {
 		if(item['name'] == null)
 		else if(item['name'].size() == 0)
 		else if(item['name'][0] == '.')
 		else if(item['attr'] == 'dir') {
-			dir = base+item['name']+'\\';
-			.dirdis(dir,type);
+			dir = base+item['name']+'\\'
+			printl(dir)
+			lsbytype(dir,type);
 		}
 	}
 }
 i = 0
 dirdis = $lsbytype;
-ls = fls('f:\\*.*')
-for(item in ls) {
-	if(item['attr'] == 'dir') {
-		printl(item['name'])
-	}
-}
-//dirdis('F:\\',null)
+dirdis('c:\\windows\\',null)

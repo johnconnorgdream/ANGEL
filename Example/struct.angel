@@ -100,7 +100,7 @@ class stack{
 			if(this.top == -1)
 			{
 				print('栈为空！')
-				ret  null
+				ret null
 			}
 			ret data[this.top]
 		}
@@ -109,7 +109,7 @@ class stack{
 			if(this.top == -1)
 			{
 				print('栈为空！')
-				ret  null
+				ret null
 			}
 			ret data[this.top--]
 		}
@@ -160,6 +160,10 @@ class binarytree
 				p.right = temp
 				if(temp != null) q.en(temp)	
 			}
+		}
+		clear()
+		{
+			this.root = null;
 		}
 		_print_h(p)
 		{
@@ -246,9 +250,13 @@ matrix(num,init=0)
 }
 l = list(10,2)
 tree = binarytree.this()
-input = ['a','b','c','d','e','f']*200000
+input = ['a','b','c','d','e','f']*10000
 input.add(null)
 tree.build(input)
+printl('year')
+tree.clear()
+tree.build(input)
+tree.tranversal()
 //tree.print_h()
 //tree.tranversal()
 //tree.tranversal1()

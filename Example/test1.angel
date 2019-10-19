@@ -1,0 +1,40 @@
+lib a
+lsbytype(base,type) {
+	printl(base)
+	ls = fls(base+'*.*')
+	for(item in ls) {
+		if(item['name'] == null)
+		else if(item['name'].size() == 0)
+		else if(item['name'][0] == '.')
+		else if(item['attr'] == 'dir') {
+			dir = base+item['name']+'\\';
+			.dirdis(dir,type);
+		}
+	}
+}
+testadd(){
+	mult = (a,b){
+		ret a * b
+	}
+	fun = (a,b){
+		ret add(a,b)
+	}
+	i = 0
+	count = 0;
+	while(i < 100000000){
+		//i = fun(i, 1)
+		i = i + 1
+	}
+	print('总共'+count+'次数')
+	ret i
+}
+i = 0
+dirdis = $lsbytype;
+ls = fls('f:\\*.*')
+for(item in ls) {
+	if(item['attr'] == 'dir') {
+		printl(item['name'])
+	}
+}
+print(testadd())
+//dirdis('F:\\',null)

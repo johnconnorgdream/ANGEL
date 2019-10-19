@@ -9,6 +9,8 @@ object initobject()
 {
 	object o = angel_alloc_block(APPLYSIZE(sizeof(objectnode)));
 	o->type = OBJECT;
+	o->mem_value = NULL;
+	o->pri_mem_value = NULL;
 	o->mem_value = initdictionary();
 	o->pri_mem_value = initdictionary();//这个当object销毁时再销毁之
 	return o;

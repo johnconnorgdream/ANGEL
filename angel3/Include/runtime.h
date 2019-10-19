@@ -45,8 +45,8 @@ extern "c"{
 
 
 #define STACKTOHEAP(o) o = (object)stacktoheap(o);
-#define stack_heap_size NUMSIZE
-#define GETSTACKHEAPASINT(base,i) (object_int)((char *)base+(i*stack_heap_size))
+#define stack_heap_size (NUMSIZE)
+#define GETSTACKHEAPASINT(base,i) (object_int)((char *)base+(i * stack_heap_size))
 
 
 

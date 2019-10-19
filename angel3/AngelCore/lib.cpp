@@ -213,18 +213,19 @@ angel_buildin_func angel_build_in_def[] =
 	/*
 	ÍøÂçÏà¹Ø
 	*/
-	//{"netname",sysnetaddr,1,0,0},
-	{"netaddr",sysnetaddr,1,0,0},
-	{"socket",syssocket,1,0,0},
-	{"bind",sysbind,2,0,0},
+	{"netname",sysnetname,1,1,0},
+	{"netaddr",sysnetaddr, 2,2,0},
+	{"socket",syssocket, 1,0,0},
+	{"bind",sysbind, 2,0,0},
 	{"listen",syslisten,2,1,0},
 	{"accept",sysaccept,2,0,0},
 	{"connect",sysconnect,2,0,0},
 	{"recv",sysrecv,1,0,0},
 	{"send",syssend,2,0,0},
 	{"sclose",syssclose,1,0,0},
+	{"socketopt",syssocketopt,2,1,0},
 
-
+	
 
 	{NULL,NULL,0,0}
 };

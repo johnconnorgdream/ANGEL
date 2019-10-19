@@ -1,13 +1,14 @@
 lib struct
 lib a
 
+
+
 //内存碎片较大
 //字符集合，操作数（[]、\w\d\s、\W\D\S）
 //运算：连接、并、重复(*、？、+、{}、|)
 //组？(就是一个可能不作为匹配但是可以暂存共后面引用)
 //转移字符
 //位置匹配^、$、\b
-
 
 
 class state
@@ -321,12 +322,12 @@ match(s,s1)
 			j = 0
 			b = nfa_m.start  //i继续
 			st.clear()
-			for(k in 0~visited.size()-1) visited[k] = false
+			for(k in 0~visited.size() - 1) visited[k] = false
 		}
 	}
 	ret res
 }
-add4(a,b){
+add4(a,b) {
 	ret a+b
 }
 f = readfile('F:\Visual Studio2010\vc\文件\斗鱼.html')
@@ -336,18 +337,14 @@ s = 'asdada'
 //res = match(f,'<d+|<d')
 
 r = regular('/(a+|b)?/');
-r.code()
 print('aabbaabcab'.find(r))
 
 pattern = '/((\w*)\.\2\.\2)*/'
 r = regular(pattern)
-source = 'www.www.www' * 20000
-range = 0~source.size() - 1
-r.code()
+source = 'www.www.www' * 200000
+range = 0 ~ source.size() - 1
 res = source.find(r)
 print(res)
-
-
 
 /*
 //m1 = f.find('<dt')

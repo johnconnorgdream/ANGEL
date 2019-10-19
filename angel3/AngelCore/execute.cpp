@@ -406,7 +406,7 @@ void exec(linkcollection thread_controll)
 
 
 	//设置函数调用环境
-	env env_reg=initenv();
+	env env_reg = initenv();
 
 
 	runtime_stack angel_runtime=initruntime();
@@ -429,8 +429,10 @@ void exec(linkcollection thread_controll)
 	register object *angel_addr=NULL,*angel_shared = &global_value_list->item[global_value_list->alloc_size],
 		*angel_inplace_addr_reg=NULL;
 	void *integer_heap_in_stack = angel_runtime->stack_heap_base,*tempval;
+
 	//free_perpetual((object)obj_list);
 	object_string *angel_name = (object_string *)dynamic_name->item;
+	
 	//先建立全局的执行环境
 	exec_environment=angel_runtime->data;
 
@@ -457,7 +459,7 @@ void exec(linkcollection thread_controll)
 #define PARAM(no)  *(int16_t *)(pc+no)
 #define ADDOP(op) pc += op;
 #define NEXTOP(op) ADDOP(op) goto next;
-#define AJUSTSTACKHEAPPTR(i) integer_heap_in_stack = ((char *)integer_heap_in_stack+(i*stack_heap_size))
+#define AJUSTSTACKHEAPPTR(i) integer_heap_in_stack = ((char *)integer_heap_in_stack+(i * stack_heap_size))
 
 #define STACKTOP exec_environment[exec_fun->localcount-1]
 #define THIS exec_environment[exec_fun->paracount]

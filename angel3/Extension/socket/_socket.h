@@ -32,7 +32,10 @@ object sysconnect(object s,object to);
 object sysrecv(object s);
 object syssend(object s,object content);
 object syssclose(object s);
-object sysnetaddr(object hostinfo);
+object sysnetaddr(object hostname,object servername);
+object sysnetname(object ip);
+object syssocketopt(object sock,object opt);
+
 
 
 #endif
