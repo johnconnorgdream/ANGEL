@@ -1,4 +1,3 @@
-#include <memory.h>
 #include "data.h"
 #include "execute.h"
 #include "lib.h"
@@ -12,7 +11,7 @@ object_dict initdictionary(int count)
 	res->type = DICT;
 	res->alloc_size = count;
 	res->hashtable = (object_entry *)angel_alloc_page((object)res,count * sizeof(object_entry));
-	memset(res->hashtable,0,count*sizeof(object));
+	angel_sys_memset(res->hashtable,0,count*sizeof(object));
 	res->len = 0;
 	return res;
 }
@@ -22,7 +21,7 @@ void resizedict(object_dict od)
 	od->alloc_size *= 2;
 	object_entry *newaddr = (object_entry *)angel_alloc_page((object)od,od->alloc_size*sizeof(object));
 	object_entry *addr = od->hashtable;
-	memset(newaddr,0,od->alloc_size*sizeof(object));
+	angel_sys_memset(newaddr,0,od->alloc_size*sizeof(object));
 	od->hashtable = newaddr;
 	od->len = 0;
 	//ÖØ·Ö²¼

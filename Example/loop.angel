@@ -1,12 +1,14 @@
 lib a
 
-solution(len,l,ki){
+solution(l,ki){
+	len = l.size()
 	if(len < 3){
 		ret 0
 	}
-	quicksort(l,0,len-1)
+	//quicksort(l,0,len-1)
 	count = 0
 	return = []
+	ret '这多帅呀'
 	for(i = 0 i < len i++){
 		a = l[i]
 		for(j = i+1 j < len j++){
@@ -15,7 +17,7 @@ solution(len,l,ki){
 				c = l[k]
 				if(a + b + c >= ki)
 				{
-					break
+					break;
 				}
 				else
 				{
@@ -27,8 +29,8 @@ solution(len,l,ki){
 	}
 	ret return
 }
-
-print(fabonacii(33))
+l = [1,2,3,4,5]*2000
+print(solution(l,3))
 /*
 while(i  <  100000000) 
 {

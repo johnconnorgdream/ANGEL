@@ -1,3 +1,4 @@
+
 #ifdef WIN32
 #include <winsock2.h>
 #include <ws2tcpip.h>
@@ -77,12 +78,11 @@ object syssocket(object protocol)
 	int type;
 	object_socket res = (object_socket)initext(APPLYSIZE(sizeof(object_socketnode)));
 	res->_type = socket_type;
-	
 	ARG_CHECK(protocol,STR,"socket",1);
 
 	if(comparestring(GETSTR(protocol),CONST("tcp"))==0)
 		type=SOCK_STREAM;
-	else if(comparestring(GETSTR(protocol),CONST("tcp"))==0)
+	else if(comparestring(GETSTR(protocol),CONST("udp"))==0)
 		type=SOCK_DGRAM;
 	else
 	{
@@ -169,50 +169,44 @@ object sysconnect(object s,object to)
 	else
 		return GETTRUE;
 }
-object sysrecv(object s)
+object sysrecv(object s,object size)
 {
-#define RECV_BUF_SIZE 128
 	int ret;
 	ARG_CHECK(s,SOCKET,"recv",1);
+	ARG_CHECK(size,INT,"recv",2);
 
-	char recvs[RECV_BUF_SIZE];
-	object_list recv_set = initarray();
 	int recvflag = 1;
-	object_string res;
-	int totalsize = 0;
-	while(recvflag)
+	object_bytes res;
+	int totalsize = GETINT(size);
+	char *recvs = (char *)angel_sys_calloc(totalsize+1,sizeof(char));
+	ret = recv(GETSOCKET(s)->s,recvs,totalsize,0);
+	if(ret <= 0)
 	{
-		ret = recv(GETSOCKET(s)->s,recvs,RECV_BUF_SIZE,0);
-		res = copystring_str(recvs,ret);
-		if(ret <= 0)
-		{
-			DECREF(recv_set);
-			return GETNULL;
-		}
-		totalsize += ret;
-		if(ret < RECV_BUF_SIZE) //表示已经取完了
-		{
-			recvflag = 0;
-		}
-		_addlist(recv_set,(object)res);
+		return GETNULL;
 	}
-	res = initstring(totalsize);
-	res->len = 0;
-	joinstring(res,(object)recv_set);
-	res->len = totalsize;
-	DECREF(recv_set);
+	res = initbytes(recvs, ret);
+
+	free(recvs);
 	return (object)res;
 }
 object syssend(object s,object content)
 {
 	int ret,sendsize;
 	ARG_CHECK(s,SOCKET,"send",1);
-	ARG_CHECK(content,STR,"send",2);
-	int totallen = GETSTR(content)->len;
-	while(1){
-		sendsize = send(GETSOCKET(s)->s,GETSTR(content)->s,GETSTR(content)->len,0);
+	ARG_CHECK(content,BYTES,"send",2);
+	int totallen = GETBYTES(content)->len;
+	if(totallen > LONG_MAX){
+		angel_out("发送超指定的字节数！");
+		return GETFALSE;
+	}
+	while(1)
+	{
+		sendsize = send(GETSOCKET(s)->s,
+			GETBYTES(content)->bytes,GETBYTES(content)->len,0);
 		if(sendsize < 0)
+		{
 			return GETFALSE;
+		}
 		else
 		{
 			ret += sendsize;
@@ -259,11 +253,11 @@ object sysnetaddr(object hostname,object servername)
 	else
 	{
 localaddr:
-		_hostname = (char *)calloc(HOST_LEN,sizeof(char));
+		_hostname = (char *)angel_sys_calloc(HOST_LEN,sizeof(char));
 		gethostname(_hostname,HOST_LEN);
 	}
 	addrinfo hints, *res;
-	memset(&hints, 0, sizeof(struct addrinfo));
+	angel_sys_memset(&hints, 0, sizeof(struct addrinfo));
     hints.ai_family = AF_INET;     /* Allow IPv4 */
     hints.ai_flags = AI_PASSIVE;/* For wildcard IP address */
     hints.ai_protocol = 0;         /* Any protocol */
@@ -318,7 +312,7 @@ object sysnetname(object ip)
 	else
 	{
 localname:
-		hostname = (char *)calloc(HOST_LEN,sizeof(char));
+		hostname = (char *)angel_sys_calloc(HOST_LEN,sizeof(char));
 		gethostname(hostname,HOST_LEN);
 		object_string ret = initstring(hostname);
 		free(hostname);
@@ -336,12 +330,12 @@ object syssocketopt(object sock,object opt)
 char **_getnameinfo(hostinfo info)
 {
 	SOCKADDR_IN addr=getnetaddr(info.ip,info.port);
-	char *hostname=(char *)calloc(NI_MAXHOST,sizeof(char));
-	char *servername=(char *)calloc(NI_MAXSERV,sizeof(char));
+	char *hostname=(char *)angel_sys_calloc(NI_MAXHOST,sizeof(char));
+	char *servername=(char *)angel_sys_calloc(NI_MAXSERV,sizeof(char));
 	if(getnameinfo((SOCKADDR *)&addr,sizeof(SOCKADDR),hostname,NI_MAXHOST,servername,
 		NI_MAXSERV,0)!=0)
 		return NULL;
-	char **ret=(char **)calloc(2,sizeof(char *));
+	char **ret=(char **)angel_sys_calloc(2,sizeof(char *));
 	ret[0]=hostname;
 	ret[1]=servername;
 	return ret;
@@ -395,7 +389,7 @@ int _getsocktype(SOCKET s,int *error)
 }
 char *_gethostname()
 {
-	char *name=(char *)calloc(NI_MAXHOST,sizeof(char));
+	char *name=(char *)angel_sys_calloc(NI_MAXHOST,sizeof(char));
 	int namelen=NI_MAXHOST;
 	if(initwinsock()!=0)
 		goto error;

@@ -36,7 +36,7 @@ inline long globalhash(object o)
 		return floathash(GETFLOAT(o));
 	case STR:
 		//GETSTR(o)->hash = res;
-		res = GETSTR(o)->hash;
+		/*res = GETSTR(o)->hash;
 		if(ISHASHTEST(o))
 		{
 			res = stringhash(GETSTR(o)->s,GETSTR(o)->len);
@@ -46,7 +46,9 @@ inline long globalhash(object o)
 		{
 			res = stringhash(GETSTR(o)->s,GETSTR(o)->len);
 			GETSTR(o)->hash = res;
-		}
+		}*/
+		res = stringhash(GETSTR(o)->s,GETSTR(o)->len);
+		GETSTR(o)->hash = res;
 		return res;
 	default :
 		return (int)o;

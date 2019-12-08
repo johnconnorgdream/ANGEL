@@ -1,38 +1,52 @@
-ï»¿i=0
-s = socket('tcp')
-bind(s,[netaddr()[0][0],3300])
-listen(s,10)
+maxrecv = 1000000
+const i = 0
 from = []
-ss = accept(s,from)
-if(!ss)
-{
-	print('è¿æ¥å‡ºé”™é€€å‡ºï¼')
+ips = netaddr()
+s = socket('tcp')
+//ÏÈÑ­»·¼àÌı
+index = 0
+socks = {:}
+for(each in ips){
+	startthread((each){
+		bind(s,[each[0],3300])
+		listen(s,10)
+		while(true){
+			ss = accept(s,from)
+			if(ss)
+			{
+				sleep(1000)
+				printl('Á¬½Óµ½Ö÷»ú '+index+'\t'+from[0]+' : ' + from[1])
+				socks[index+''] = ss
+				send(ss,('Ö÷»úÃûÎª'+index).bytes())
+				startthread((s,index){
+					while(true)
+					{
+						content = recv(s,maxrecv)
+						if(content == null){
+							sclose(s)
+							break
+						}
+						else{
+							content = content.str()
+							pos = content.find(':') //ÇĞ³ö·¢ËÍµÄÄ¿±êÎ»ÖÃ
+							if(pos == -1){
+								send(s,'ĞèÒªÖ¸¶¨·¢ËÍµÄip'.bytes())
+								continue ;
+							}
+							dest = content[*~pos-1]
+							dests = socks[dest]
+							msg = 'accept from host['+index+']:'
+							info = 'send '
+							msg += content[pos+1~*];
+							print(info + content[pos+1~*] + '...')
+							send(dests,msg.bytes())
+						}
+					}
+				},[ss,index])
+				index++; //±íÊ¾Ö÷»úµÄºÅ
+			}
+		}},[each]
+	)
 }
-else{
-	print('è¿æ¥åˆ°'+from[0]+' : '+from[1])
-	sleep(1000)
-	send(ss,'2332'*10000)
-	
-	while(true){
-		sc = scan()
-		res = send(ss,sc)
-		if(!res)
-			break 
-	}
-	sclose(s)
-}
-
-
-/*
-
-let send=thread('send',$sendc,param,'fore');
-param.add(1);
-let recv1=thread('recv',$recvc,param,'fore');
-param[1]=2;
-let recv2=thread('recv',$recvc,param,'fore');
-param[1]=3;
-let recv3=thread('recv',$recvc,param,'fore');
-param[1]=4;
-let recv4=thread('recv',$recvc,param,'fore');
-param[1]=5;
-let recv5=thread('recv',$recvc,param,'fore');
+//ÕâÊÇ½øĞĞ¼àÌı¾ÍºÃ
+while(true);

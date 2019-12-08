@@ -8,7 +8,7 @@
 #include "execute.h"
 #include "runtime.h"
 #include "compilerutil.h"
-
+#include "shell.h"
 
 /*
 
@@ -79,7 +79,32 @@ angel_memry get_data_heap()
 {
 	return angel_data_heap;
 }
-
+void *angel_sys_malloc(int size)
+{
+	void *ret = malloc(size);
+	if(ret == NULL){
+		angel_error("内存溢出！");
+		exit(0);
+	}
+	return ret;
+}
+void *angel_sys_memset(void* addr,int val,int size)
+{
+	void *ret = memset(addr,val,size);
+	if(ret == NULL){
+		angel_error("内存溢出！");
+		exit(0);
+	}
+	return ret;
+}
+void *angel_sys_memcpy(void *target,void *source,int size)
+{
+	return memcpy(target,source,size);
+}
+void *angel_sys_calloc(int count,int size)
+{
+	return calloc(count,size);
+}
 
 
 #define ADDFREELIST_O(_free) _free->next = free_block->next; \
@@ -112,15 +137,15 @@ void lock_const_sector()
 void add_free_block(field f)
 {
 	block init = (block)f->memry;
-	memset(init,0,max_block_size);
+	angel_sys_memset(init,0,max_block_size);
 	init->block_size = max_block_size;
 	init->next = free_block->next;
 	free_block->next = init; //这将前面的圾回收的结果都淘汰到链的末尾。
 }
 field init_block_field()
 {
-	field f = (field)calloc(1,sizeof(fieldnode));
-	char *addr = (char *)malloc(max_block_size);
+	field f = (field)angel_sys_calloc(1,sizeof(fieldnode));
+	char *addr = (char *)angel_sys_malloc(max_block_size);
 	f->memry = addr;
 	add_free_block(f);
 	return f;
@@ -128,7 +153,7 @@ field init_block_field()
 void init_page_field_info(field f,int allocsize=max_page_size)
 {
 	void *addr = f->memry;
-	memset(addr,0,allocsize);
+	angel_sys_memset(addr,0,allocsize);
 	f->free_size = allocsize;
 	f->alloc_ptr = 0;
 	page p = (page)addr;
@@ -137,15 +162,15 @@ void init_page_field_info(field f,int allocsize=max_page_size)
 }
 field init_page_field(int allocsize = max_page_size)
 {
-	field f = (field)calloc(1,sizeof(fieldnode));
-	char *addr = (char *)malloc(allocsize);
+	field f = (field)angel_sys_calloc(1,sizeof(fieldnode));
+	char *addr = (char *)angel_sys_malloc(allocsize);
 	f->memry = addr;
 	init_page_field_info(f,allocsize);
 	return f;
 }
 angel_memry init_block_heap()
 {
-	angel_memry am = (angel_memry)calloc(1,sizeof(angel_memrynode));
+	angel_memry am = (angel_memry)angel_sys_calloc(1,sizeof(angel_memrynode));
 	am->total_size += max_block_size;
 	am->field_head = am->field_current = init_block_field();
 	am->field_count = 1;
@@ -153,16 +178,16 @@ angel_memry init_block_heap()
 }
 angel_memry init_page_heap()
 {
-	angel_memry am = (angel_memry)calloc(1,sizeof(angel_memrynode));
+	angel_memry am = (angel_memry)angel_sys_calloc(1,sizeof(angel_memrynode));
 	am->total_size += max_page_size;
 	am->field_head = am->field_current = init_page_field();
-	am->extend_head = (field)calloc(1,sizeof(fieldnode));
+	am->extend_head = (field)angel_sys_calloc(1,sizeof(fieldnode));
 	am->field_count = 1;
 	return am;
 }
 object getpuppet()
 {
-	object res = (object)malloc(sizeof(int)*2);
+	object res = (object)angel_sys_malloc(sizeof(int)*2);
 	res->type = INT;
 	res->refcount = 2;
 	return res;
@@ -211,7 +236,7 @@ void init_page_const()
 }
 void init_heap()
 {
-	free_block = (block)calloc(1,sizeof(blocknode));
+	free_block = (block)angel_sys_calloc(1,sizeof(blocknode));
 	angel_object_heap = init_block_heap();
 	angel_data_heap = init_page_heap();
 	angel_traversal_stack = initcollection();
@@ -284,7 +309,7 @@ void reset_heap()
 
 void angel_init(object o)
 {
-	memset(o+1,0,sizeof(object)-4);
+	angel_sys_memset(o+1,0,sizeof(object)-4);
 }
 
 
@@ -306,7 +331,7 @@ alloc:
 		block old;
 		if(left >= 0)  
 		{
-			o = (object)((char *)p+left);
+			o = (object)((char *)p + left);
 			if(left < MINSIZE)
 			{
 				pre->next = p->next;
@@ -374,7 +399,7 @@ void sys_realloc_list(object_list l,int resize)
 {
 	void *addr = l->item;
 	angel_free_page(addr);
-	l->item = (object *)malloc(sizeof(object)*resize);
+	l->item = (object *)angel_sys_malloc(sizeof(object)*resize);
 }
 
 
@@ -671,7 +696,6 @@ int detect_loop_reference(object o)
 	{
 		o->extra_flag |= LOOP_CHECK_FLAG;
 	}
-
 	//如果没有产生循环引用的对象标记上去的如何恢复
 
 	return 1;
@@ -818,8 +842,9 @@ inline int is_global_gc_step()
 }
 void block_gc()
 {
-#define STEP_SMALL 1/2
-#define STEP_BIG 3/5
+#define STEP_UNIT 1/5
+#define STEP1_CYCLE 1/2
+#define STEP2_CYCLE 3/5
 
 	angel_object_heap->free_size = 0;
 	field scan_field;
@@ -847,13 +872,14 @@ void block_gc()
 	
 	if(angel_object_heap->flag == CYCLE_GC_FLAG || angel_object_heap->flag == GLOBAL_GC_FLAG)
 	{
-		if(freesize < totalsize*STEP_SMALL)  //一次周期gc之后还是很多垃圾
+		if(freesize < totalsize * STEP1_CYCLE)  //一次周期gc之后还是很多垃圾
 		{
 			angel_object_heap->flag = 0;
 			goto addfield;
 		}
-		else if(freesize < totalsize * STEP_BIG)
+		else if(freesize < totalsize * STEP2_CYCLE)
 		{
+			//下一次不用这个了
 			angel_object_heap->flag = 0;
 		}
 		else
@@ -862,7 +888,7 @@ void block_gc()
 			goto cycle_gc;
 		}
 	}
-	if(freesize < totalsize * STEP_SMALL)  //表示此时不在
+	if(freesize < totalsize * STEP_UNIT)  //表示此时不在
 	{
 addfield:
 		//开始开辟新的内存空间并将原来的淘汰掉
@@ -981,7 +1007,7 @@ _free_:
 				MERGE(_free,p);
 			}
 		}
-		//memset((char *)f->memry+merge,0,`-merge);
+		//angel_sys_memset((char *)f->memry+merge,0,`-merge);
 		f->alloc_ptr = merge;
 		f->free_size = max_page_size - merge - 1;
 		angel_data_heap->free_size += f->free_size;
@@ -1023,7 +1049,7 @@ void ajust(field *base,int index,int size)
 field *createheap()
 {
 	int heap_size = angel_data_heap->field_count,i = 1;
-	field *heap = (field *)calloc(heap_size+1,sizeof(field));
+	field *heap = (field *)angel_sys_calloc(heap_size+1,sizeof(field));
 	field p = angel_data_heap->field_head;
 	while(p)
 	{
@@ -1097,8 +1123,10 @@ inline int is_page_cycle_gc_step()
 }
 void page_gc()
 {
-#define STEP 1/2
+#define UNIT_STEP 1/4
+#define CYCLE_STEP 1/2
 #define MERGE_STEP 1/3
+
 	object test;
 
 	field oldcur = angel_data_heap->field_current;
@@ -1126,7 +1154,7 @@ void page_gc()
 		int merge_count = global_merge();
 		if(merge_count < angel_data_heap->field_count*MERGE_STEP)
 			goto addfield;
-		if(freesize < totalsize*STEP)
+		if(freesize < totalsize * CYCLE_STEP)
 		{
 			goto addfield; //大规模的浪费
 		}
@@ -1137,7 +1165,7 @@ void page_gc()
 		}
 		return ;
 	}
-	if(freesize < totalsize*STEP)  //表示此时不在
+	if(freesize < totalsize * UNIT_STEP)  //表示此时不在
 	{
 addfield:
 		//开始开辟新的内存空间并将原来的淘汰掉

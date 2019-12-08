@@ -30,13 +30,14 @@ int comparestring(object_string s1,object_string s2);
 ¿âº¯Êý¶¨Òå
 */
 object syssize_string(object o);
+object sysbytes_string(object o);
 object sysjoin_string(object join,object o);
 object sysupper_string(object o);
 object syslower_string(object o);
 object sysfind_string(object pattern,object range,object o);
 object sysfindall_string(object pattern,object range,object o);
 object sysmatch_string(object pattern,object range,object o);
-
+object sysnum_string(object);
 
 #ifdef _cplusplus
 }

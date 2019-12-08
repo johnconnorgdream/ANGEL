@@ -154,12 +154,7 @@ object syshash(object o)
 object sysregular(object s)
 {
 	ARG_CHECK(s,STR,"regular",1);
-	object res = checkpatternparam((object)s);
-	if(ISSTR(res))
-	{
-		angel_error("正则表达式必须是/**/格式！");
-		return GETNULL;
-	}
+	object_regular res = are_compile((wchar *)GETSTR(s)->s);
 	return (object)res;
 }
 //系统函数不打算用类的形式提供，所以需要考虑系统资源表示数目问题
@@ -220,7 +215,7 @@ angel_buildin_func angel_build_in_def[] =
 	{"listen",syslisten,2,1,0},
 	{"accept",sysaccept,2,0,0},
 	{"connect",sysconnect,2,0,0},
-	{"recv",sysrecv,1,0,0},
+	{"recv",sysrecv,2,0,0},
 	{"send",syssend,2,0,0},
 	{"sclose",syssclose,1,0,0},
 	{"socketopt",syssocketopt,2,1,0},
@@ -267,17 +262,20 @@ angel_buildin_func angel_dict_func_def[] =
 angel_buildin_func angel_string_func_def[] = 
 {
 	{"size",syssize_string,1,0,0},
+	{"bytes",sysbytes_string,1,0,0},
 	{"join",sysjoin_string,2,0,0},
 	{"upper",sysupper_string,1,0,0},
 	{"lower",syslower_string,1,0,0},
 	{"find",sysfind_string,3,1,0},
 	{"findall",sysfindall_string,3,1,0},
 	{"match",sysmatch_string,3,1,0},
+	{"tonum",sysnum_string,1,0,0},
 	{NULL,NULL,0,0}
 };
 angel_buildin_func angel_bytes_func_def[] = 
 {
 	{"size",syssize_bytes,1,0,0},
+	{"str",sysstr_bytes,1,0,0},
 	{NULL,NULL,0,0}
 };
 angel_buildin_func angel_regular_func_def[] = 

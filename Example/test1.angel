@@ -7,8 +7,8 @@ lsbytype(base,type) {
 		else if(item['name'].size() == 0)
 		else if(item['name'][0] == '.')
 		else if(item['attr'] == 'dir') {
-			dir = base+item['name']+'\\';
-			.dirdis(dir,type);
+			dir = base + item['name']+'\\';
+			lsbytype(dir,type);
 		}
 	}
 }
@@ -22,14 +22,71 @@ testadd(){
 	i = 0
 	count = 0;
 	while(i < 100000000){
-		//i = fun(i, 1)
-		i = i + 1
+		i = fun(i, 1)
+		//i = i + 1
 	}
-	print('总共'+count+'次数')
 	ret i
 }
+lsbytype('f:\\visual studio2010\\','c')
+l = [1,2,3,4,5,6];
+i = 0;
+s = 'asdsada';
+driver = {
+	'a':(){
+		print('hello worlda')
+	},
+	'b':(){
+		print('hello worldb')
+	},
+	'c':(){
+		print('hello worldc')
+	},
+	'd':(){
+		print('hello worldd')
+	},
+	'e':(){
+		print('hello worlde')
+	},
+	'f':(){
+		print('hello worldf')
+	},
+	'g':(){
+		print('hello worldg')
+	}
+}
+testf(fn)
+{
+	i = 0
+	t = clock()
+	fn()
+	printl(clock() - t)
+}
+l = []
+for(item in driver.keys()){
+	l.add(driver[item])
+}
+printl(l)
+/*
+while(i < max){
+    l[(i+1) % 6] = l[(i+2) % 6]
+    //d = s + '1sdfaasd'
+    i = i + 1
+}
+
+while(i < max){
+    s = s + '1234'
+    printl(s.size())
+    i = i + 1
+}
+
+
+/*
+
+
+/*
+dirdis = $lsbytype
+fun = $print
 i = 0
-dirdis = $lsbytype;
 ls = fls('f:\\*.*')
 for(item in ls) {
 	if(item['attr'] == 'dir') {
@@ -38,3 +95,7 @@ for(item in ls) {
 }
 print(testadd())
 //dirdis('F:\\',null)
+
+
+(DSMS)可以使用一些预先注册的查询来监视，这些查询会报告结果
+随着数据流的新数据元素的不断到来

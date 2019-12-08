@@ -6,13 +6,22 @@ lsbytype(base,type) {
 		if(item['name'] == null)
 		else if(item['name'].size() == 0)
 		else if(item['name'][0] == '.')
-		else if(item['attr'] == 'dir') {
+		else if(item['attr'] == 'dir') 
+		{
 			dir = base+item['name']+'\\'
 			printl(dir)
 			lsbytype(dir,type);
+		}
+		else if(item['attr'] == 'file')
+		{
+			dir = base+item['name']
+			printl(dir)
+			//content = readfile(dir,'byte')
+			//print(content)
 		}
 	}
 }
 i = 0
 dirdis = $lsbytype;
-dirdis('c:\\windows\\',null)
+//dirdis('c:\\windows\\',null)
+dirdis('g:\\qq\\',null)

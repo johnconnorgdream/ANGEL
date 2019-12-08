@@ -114,11 +114,11 @@ object sysfread(object file)
 {
 	FILE *fp = GETFILE(file)->f;
 	int filesize = getfilesize(fp);
-	void *buffer = (void *)calloc(1,filesize);
+	void *buffer = (void *)angel_sys_calloc(1,filesize);
 	if(!fread_bytes(fp,buffer,filesize))
 		return GETNULL;
 	object_bytes res = initbytes(filesize);
-	memcpy(res->bytes,buffer,filesize);
+	angel_sys_memcpy(res->bytes,buffer,filesize);
 	free(buffer);
 	return (object)res;
 }
@@ -128,7 +128,7 @@ object sysfgets(object file)
 	FILE *f = GETFILE(file)->f;
 	char *encode_res;
 	int filesize = getfilesize(f);
-	void *buffer = (void *)calloc(1,filesize+2);
+	void *buffer = (void *)angel_sys_calloc(1,filesize+2);
 	if(!fread_bytes(f,buffer,filesize))
 		return GETNULL;
 	int encode = encode_format((char *)buffer,&encode_res);

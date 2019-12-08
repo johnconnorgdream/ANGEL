@@ -1,0 +1,104 @@
+lib client
+maxrecv = 1533900
+g_req = ''
+split(s,sp){
+	size = sp.size()
+	joins = s.findall(sp)
+	begin = 0
+	res = []
+	for(each in joins){
+		item = s[begin ~ each-1]
+		res.add(item)
+		begin = each + size
+	}
+	if(begin != s.size() - 1){
+		res.add(s[begin~*])
+	}
+	ret res
+}
+get(url){
+	if(url[0 ~ 7] == 'https://')
+	{
+		url = url[8 ~ *]
+	}
+	pos = url.find('/')
+	dir = url[pos ~ *]
+	host = url[0 ~ pos-1]
+	tcp_cli((s,param){
+		req = 'GET '+param[0]+' HTTP/1.1\r\n'
+		req += 'Content-Type: text/plain;charset=UTF-8\r\n'
+		req += 'Host: pos.baidu.com\r\n'
+		req += 'Connection: keep-alive\r\n'
+		req += 'Upgrade-Insecure-Requests: 1\r\n'
+		req += 'User-Agent: Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/78.0.3904.70 Safari/537.36\r\n'
+		req += 'Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3\r\n'
+		
+		req += 'Sec-Fetch-Site: cross-site\r\n'
+		req += 'Sec-Fetch-Mode: nested-navigate\r\n'
+		req += 'Referer: https://blog.csdn.net/yirexiao/article/details/5135976\r\n'
+		//req += 'Accept-Encoding: gzip, deflate, br\r\n'
+		req += 'Accept-Language: zh-CN,zh;q=0.9\r\n'
+		//req += 'Cookie: BIDUPSID=F127F33C119BABE642FFD5552AB9897D; PSTM=1520694344; CPROID=F127F33C119BABE642FFD5552AB9897D:FG=1; BDUSS=trZWtnLU92OW9rUHR0T3VKRzJ1c2NqTEZSQnliZEo2VXZVMmZRMmxrd3RxVTFjQVFBQUFBJCQAAAAAAAAAAAEAAAC5I~nD1Ly6sr-1xMkxMjM0AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAC0cJlwtHCZcV0; BAIDUID=6077C7C75504E43905D68F8846130A7C:FG=1; MCITY=-257%3A; BDORZ=B490B5EBF6F3CD402E515D22BCDA1598; ISBID=6077C7C75504E43905D68F8846130A7C:FG=1; ISUS=F127F33C119BABE642FFD5552AB9897D:FG=1; H_PS_PSSID=1436_21114_20882_29910_29568_29221_26350; delPer=0; PSINO=1; pgv_pvi=9320567808; pgv_si=s4436707328\r\n'
+		req += '\r\n';
+		.g_req = req
+		r = send(s, req.bytes())
+		if(r){
+			beginflag = true
+			totalsize = 0
+			attrs = {:}
+			html = ''
+			while(true){
+				stream = recv(s,maxrecv)
+				if(stream){
+					res = stream.str()
+					//printl(res)
+					//print(stream)
+					totalsize += stream.size()
+					chunck = res
+					if(beginflag){
+						beginflag = false
+						pos = res.find('\r\n\r\n')
+						if(pos == -1) {
+							printl('反应头出错！')
+							break
+						}
+						totalsize -= pos/2
+						heads = split(res[0 ~ pos - 1], '\r\n')
+						state = heads[0]
+						states = split(state,' ')
+						state_code = states[1]
+						for(kv in heads[1~*]) {
+							pos = kv.find(':')
+							//下面步骤需要分两步来完成
+							value = kv[pos + 1 ~ *]
+							attrs[kv[0 ~ pos - 1]] = value
+						}
+						if(state_code == '302' || state_code == '301')
+						{
+							print(attrs['Location'][1~*])
+							get(attrs['Location'][1~*])
+							ret ;
+						}
+						//printl(attrs)
+						chunck = res[pos + 4 ~ *]
+						//print('hello')
+					}
+					html += chunck
+					if(totalsize >= attrs['Content-Length'][1~*].tonum()){
+						print(html)
+						print([totalsize , attrs['Content-Length'][1~*].tonum()])
+						//print(parse(html,'html')) 竟然为空，匪夷所思
+						res = html.findall(regular('<script>(\n)*.*(\n)*</script>'))
+						//for(each in res) printl(html[each])
+						break
+					}
+				}
+			}
+		}
+	},[dir],80,host)
+}
+//get('https://www.cnblogs.com/gofighting/p/5421890.html')
+get('https://pos.baidu.com/s?hei=90&wid=900&di=u3491668&ltu=https%3A%2F%2Fblog.csdn.net%2Fyirexiao%2Farticle%2Fdetails%2F5135976&psi=816474ab0872570b65380c123019b4f3&exps=111000,110011&col=zh-CN&prot=2&ari=2&tcn=1571989329&tpr=1571989328518&chi=1&dri=1&pis=-1x-1&ps=5979x407&cec=UTF-8&dc=3&cfv=0&pcs=1403x542&dis=0&ti=0x0d%E5%92%8C0x0a%20%E5%AD%A6%E4%B9%A0&par=1280x1024&pss=1403x8824&drs=1&dtm=HTML_POST&cmi=4&cja=false&dai=3&psr=1280x1024&ant=0&cce=true&cdo=-1&cpl=3&tlm=1571989328&ccd=24')
+
+
+

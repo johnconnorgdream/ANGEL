@@ -338,7 +338,7 @@ linkcollection alloc_thread()
 {
 	fast_lock();
 	linkcollection thread_controll = initlink();
-	runable run = (runable)calloc(1,sizeof(runablenode));
+	runable run = (runable)angel_sys_calloc(1,sizeof(runablenode));
 	thread_controll->data = run;
 	run->thread_type = DAEMON_TYPE;
 	addlink(angel_stack_list,thread_controll);
@@ -787,7 +787,6 @@ storeindex:
 					{
 						if(!storeslicelist_asslice(GETLIST(left),GETRANGE(o),GETSLICE(right)))
 							goto exit;
-						DECREF(right);
 					}
 				}
 				else

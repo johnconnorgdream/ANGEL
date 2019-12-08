@@ -5,6 +5,8 @@
 #include "shell.h"
 #include "compilerutil.h"
 #include "runtime.h"
+#include "amem.h"
+
 //目前所有的池查询操作已经完全划归到set操作中，剩下的就是常量的存储方式。是malloc还是本系统的
 
 object_set string_pool,num_pool;
@@ -28,9 +30,9 @@ void init_test_obj()
 	//利用test目的是为了兼容set和dict的方法，即用object的形式传入
 	test_for_string = getsharedstring("");
 	test_for_string->flag = FLAG_HASH_TEST;
-	test_for_int = (object_int)malloc(sizeof(object_intnode));
+	test_for_int = (object_int)angel_sys_malloc(sizeof(object_intnode));
 	test_for_int->type = INT;
-	test_for_float = (object_float)malloc(sizeof(object_floatnode));
+	test_for_float = (object_float)angel_sys_malloc(sizeof(object_floatnode));
 	test_for_float->type = FLOAT;
 }
 void init_const_pool()
@@ -44,7 +46,7 @@ void extent_const_pool()
 }
 object_string getsharedstring(char *s)
 {
-	object_string res = (object_string)calloc(1,sizeof(object_stringnode));
+	object_string res = (object_string)angel_sys_calloc(1,sizeof(object_stringnode));
 	res->type = STR;
 	res->s = s;
 	res->len = strlen(s);
@@ -60,7 +62,7 @@ object_string getsharedstring_wide(char *s)  //这个用在需要表示大范围的情况下
 	if(*s)
 		res = towide(s,&len);
 	else
-		res = (char *)calloc(2,sizeof(char));
+		res = (char *)angel_sys_calloc(2,sizeof(char));
 	if(len == -1)
 	{
 		angel_error("编码失败！");
@@ -74,7 +76,7 @@ object_string getsharedstring_wide(char *s)  //这个用在需要表示大范围的情况下
 }
 object_int getsharednum(long val)
 {
-	object_int res = (object_int)calloc(1,sizeof(object_intnode));
+	object_int res = (object_int)angel_sys_calloc(1,sizeof(object_intnode));
 	res->type = INT;
 	res->val =val;
 	return res;
@@ -158,7 +160,7 @@ object getconstbyint(int64_t val)
 	if(o) return o;
 	else
 	{
-		object_int i = (object_int)calloc(1,sizeof(object_intnode)+2);
+		object_int i = (object_int)angel_sys_calloc(1,sizeof(object_intnode)+2);
 		i->type = INT;
 		i->refcount = 0;
 		i->val = val;
@@ -175,7 +177,7 @@ object getconstbyfloat(double val)
 	if(o) return o;
 	else
 	{
-		object_float f = (object_float)calloc(1,sizeof(object_floatnode)+2);
+		object_float f = (object_float)angel_sys_calloc(1,sizeof(object_floatnode)+2);
 		f->type = FLOAT;
 		f->val = val;
 		f->osize = 0;

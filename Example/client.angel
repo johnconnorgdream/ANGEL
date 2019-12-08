@@ -1,30 +1,53 @@
-﻿
-s = socket('tcp')
-if(connect(s,[netaddr()[0][0],3300]))
+﻿/*
+
+操作系统接口的阻塞模式和非阻塞模式的函数返回值基本相同，
+具体的含义可以通过errorno来判断是否'完成'还是'网络错误'
+
+非阻塞与阻塞与是否用select等一异步io模型没有必然的关系
+
+*/
+
+maxrecv = 10000
+tcp_cli(deal,param = [],port = 80,hostname='localhost'){
+	ips = netaddr(hostname)
+	s = socket('tcp')
+
+	for(each in ips) {
+		res = connect(s,[each[0],port])
+		if(res) break
+	}
+	
+	if(res) {
+		deal(s,param)
+	}
+	else {
+		print('连接失败！')
+	}
+}
+cli_deal(s,param)
 {
 	print('连接成功！')
-}
-else
-{
-	print('连接失败！')
-}
-
-startthread((s){
-	while(true)
-	{
-		content = recv(s)
-		if(content == null)
+	startthread((s){
+		while(true)
+		{
+			content = recv(s,maxrecv)
+			if(content == null) {
+				printl('服务端断开或接收数据copy出错')
+				break
+			} else {
+				printl(content.str())
+			}
+		}
+	},[s])
+	while(true){
+		sc = scan()
+		res = send(s,sc.bytes())
+		if(!res)
 			break
-		else
-			printl(content)
 	}
-},[s])
-while(true){
-	sc = scan()
-	res = send(s,sc)
-	if(!res)
-		break
 }
+tcp_cli($cli_deal,[],3300)
+
 
 /*
 param.add(c);

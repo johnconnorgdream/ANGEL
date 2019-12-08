@@ -1,11 +1,10 @@
 #include <stdlib.h>
 #include <string.h>
-#include <memory.h>
 #include "data.h"
 #include "util.h"
 #include "execute.h"
 #include "shell.h"
-
+#include "amem.h"
 __forceinline int encode_format(char *buffer,char **decode_entry)
 {
 	//优先判断是否是utf8或unicode，如果不是默认按
@@ -108,8 +107,8 @@ char* tointchar(int64_t a)
 	char *ret,*p,*temp,*q;
 	int64_t b;
 	int digit = digits(a);
-	p=(char *)malloc(digit+1);
-	ret=(char *)malloc(digit+1);
+	p=(char *)angel_sys_malloc(digit+1);
+	ret=(char *)angel_sys_malloc(digit+1);
 	q=ret;
 	temp=p;
 	int radix=10; //以十进制为例
@@ -139,7 +138,7 @@ char* tointchar(int64_t a)
 
 char *getstrcat(char *des,char *src)
 {
-	char *res=(char *)malloc(strlen(des)+strlen(src)+1),*p;   //字符串加法之所以慢是这里每次都要计算strlen()
+	char *res=(char *)angel_sys_malloc(strlen(des)+strlen(src)+1),*p;   //字符串加法之所以慢是这里每次都要计算strlen()
 	p=res;
 	while(*des) *p++=*des++;
 	while(*src) *p++=*src++;
@@ -148,46 +147,32 @@ char *getstrcat(char *des,char *src)
 }
 char *tonative(object_string s)  //UNICODE转化为NATIVE
 {
-	char *res = (char *)calloc(s->len+1,sizeof(char));
+	char *res = (char *)angel_sys_calloc(s->len+1,sizeof(char));
 	int gbksize = UnicodeToGbk((uint16_t *)s->s,res,s->len);
 	return res;
 }
-char *tomult(object_string s)  //将Unicode转化为utf8
+char *tomult(object_string s,int *size)  //将Unicode转化为utf8
 {
-	char *res = (char *)calloc(s->len*3/2+1,sizeof(char));
+	char *res = (char *)angel_sys_calloc(s->len*3/2+1,sizeof(char));
 	int len = UnicodeToUtf8(s->s,res);
+	if(size)
+		*size = len;
 	return res;
 }
 char *towide_n(char *s,int *reslen) //NATIVE->UNICODE
 {
 	int len = *reslen;
-	char *test = (char *)calloc(len*2+2,sizeof(char));
+	char *test = (char *)angel_sys_calloc(len*2+2,sizeof(char));
 	*reslen = GbkToUnicode(s,(uint16_t *)test,len);
 	return test;
 }
 char *towide(char *s,int *reslen)  //UTF8->UNICODE
 {
 	int len = *reslen;
-	char *test = (char *)calloc(len*2+2,sizeof(char));
+	char *test = (char *)angel_sys_calloc(len*2+2,sizeof(char));
 	int widelen = Utf8ToUnicode(s,test);
 	if(widelen == -1)
 		widelen = GbkToUnicode(s,(uint16_t *)test,len);
 	*reslen = widelen;
 	return test;
-}
-object checkpatternparam(object pattern)
-{
-	object regular = pattern;
-	regular = pattern;
-	if(ISSTR(pattern))
-	{
-		wchar * patterntmp = (wchar *)GETSTR(pattern)->s;
-		if(*patterntmp == '/')  //表示此时是正则表达式
-			regular = (object)are_compile(patterntmp + 1);
-	}
-	else if(!ISREGULAR(pattern))
-	{
-		return NULL;
-	}
-	return regular;
 }

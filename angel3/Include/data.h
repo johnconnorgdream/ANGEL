@@ -18,6 +18,8 @@ extern "c"{
 //进一步优化对象的内存结构，将对象中的成分全变为对象，这样有利于内存管理
 #ifndef base_def
 #define base_def
+//这里flag的高四位表示对象的额外类型属性。
+//低四位表示的是对象基本属性（比如对象生成方式heap还是xxx）
 #define _BASE unsigned char type,extra_flag,osize,flag;int refcount;
 #define BASEDEF _BASE
 #endif

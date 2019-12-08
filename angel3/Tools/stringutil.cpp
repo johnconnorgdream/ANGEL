@@ -2,6 +2,7 @@
 #include "data.h"
 #include "stringutil.h"
 #include "lib.h"
+#include "amem.h"
 /*
 kmp模式匹配
 next数组计算过程本身也是匹配过程
@@ -60,25 +61,27 @@ int kmp(wchar * s_s1,wchar *s_s2,int begin,int end,int patternlen)
 				i++;
 		}
 	}
-	return i;
+	return -1;
 }
 object strfind(wchar * s,wchar *pattern,int begin,int end,int patternlen)
 {
-	next = (int *)calloc(patternlen,sizeof(int));
+	next = (int *)angel_sys_calloc(patternlen,sizeof(int));
 	calcnext(pattern,next);
 	int res = kmp(s,pattern,begin,end,patternlen);
-	return (object)initinteger(res - patternlen+1);
+	return (object)initinteger(res - patternlen + 1);
 }
 object strfindall(wchar * s,wchar *pattern,int begin,int end,int patternlen)
 {
-	next = (int *)calloc(patternlen,sizeof(int));
+	next = (int *)angel_sys_calloc(patternlen,sizeof(int));
 	calcnext(pattern,next);
 	object_list ret = initarray();
 	int i = begin;
 	while(i <= end)
 	{
 		i = kmp(s,pattern,i,end,patternlen);
-		addlist(ret,(object)initinteger(i));
+		if(i == -1)
+			break ;
+		addlist(ret,(object)initinteger(i - patternlen + 1));
 		i++;
 	}
 	return (object)ret;

@@ -29,7 +29,7 @@ object sysbind(object s,object host);
 object syslisten(object s,object blog);
 object sysaccept(object s,object from);
 object sysconnect(object s,object to);
-object sysrecv(object s);
+object sysrecv(object s,object size);
 object syssend(object s,object content);
 object syssclose(object s);
 object sysnetaddr(object hostname,object servername);

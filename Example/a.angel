@@ -1,11 +1,11 @@
-swap(a, i, j) 
+swap(a, i, j)
 {
 	if(i == j) ret
 	tmp = a[i]
 	a[i] = a[j]
 	a[j] = tmp
 }
-add(a, b) 
+add(a, b)
 {
 	ret a+b
 }
@@ -52,21 +52,21 @@ bubble(l)
 		}
 	}
 }
-insert(l)
+insertsort(l)
 {
 	for(i = 1 i <  l.size() i++)
 	{
 		temp = l[i]
-		for(j = i-1 j >= 0 j--)
+		for(j = i - 1 j >= 0 j--)
 		{
 			if(l[j] > temp)
 			{
-				l[j+1] = l[j]
+				l[j + 1] = l[j]
 			}
 			else
 			{
-				l[j+1] = temp
-				break 
+				l[j + 1] = temp
+				break
 			}
 		}
 	}
@@ -105,7 +105,7 @@ initajust(l)
 		ajustdown(l,i)
 	}
 }
-heap(l)  //堆排序
+heapsort(l)  //堆排序
 {
 	initajust(l)
 	for(i = l.size()-1 i > 0 i--)
@@ -119,7 +119,7 @@ quicksort(l,low,high)
 {
 	if(low<high)
 	{
-		pivot = partition(l,low,high)
+		pivot = findpivot(l,low,high)
 		quicksort(l,low,pivot-1)
 		quicksort(l,pivot+1,high)
 	}
@@ -205,8 +205,10 @@ readfile(filename,mode = 'text')
 		printl('文件不存在！')
 		ret null
 	}
-	if(mode == 'text') content = fgets(file)
-	else if(mode == 'byte') content = fread(file)
+	if(mode == 'text') 
+		content = fgets(file)
+	else if(mode == 'byte') 
+		content = fread(file)
 	fclose(file)
 	ret content  //有不认识的标识符系统一定要指出来
 }
@@ -214,8 +216,9 @@ getlines(content)
 {
 	res = []
 	begin = 0
+	content *= 100
 	len = content.size()
-	print(len)
+	printl(len)
 	for(i = 0 i < len i++)
 	{
 		if(content[i] == '\n')
@@ -243,11 +246,46 @@ count = 0
 f1 = 1.1
 i = 0
 path = 'F:\Visual Studio2010\vc\文件\\斗鱼.html'
-file = fopen(path,'!read')
+//file = readfile('C:\\Users\\25013\\Desktop\\monomorium_2014-12-08.sql')
+//l = file.findall('CREATE TABLE')
+//l = getlines(file)
+//print(l[100000])
+l = [2,3,5,4,6,7,5,3,2,6,8,6,4,3,5,3,6,8,2]*100
+printl('intitle:("continue query"OR"continuous queries")'=='intitle:("continue query"OR"continue queries")')
+while(true){
+	method = scan()
+	if(method == 'exit'){
+		break
+	}
+	printl('cmd :'+method)
+	switch(method){
+		case 'q':
+		case 'quick':
+			quicksort(l)
+			printl('sort complete!')
+			break
+		case 'h':
+		case 'heap':
+			heapsort(l)
+			printl('sort complete!')
+			break
+		case 'i':
+		case 'insert':
+			insertsort(l)
+			printl('sort complete!')
+			break
+		case 'l':
+			printl(l)
+			break
+		default:
+			printl('invalid cmd')
+			break
+	}
+}
 
+/*
 //解析xml文件
-xmlstr = 
-'<html><head><script>var i = 0; i = i + 1</script></head></html>'
+xmlstr = '<html><head><script>var i = 0; i = i + 1</script></head></html>'
 xmlstr = readfile(path)
 d = parse(xmlstr,'xml')
 //print_info_xml(d,'div')
@@ -257,3 +295,5 @@ l = [3,2,4,5,2,5,8,7,3,5]
 l = l * 10000
 quicksort(l)
 printl((clock()-c)/1000)
+/*
+The set of all graph patterns over a metamodel is denoted as P atternsMM

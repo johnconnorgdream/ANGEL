@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "_xmlcompile.h"
+#include "amem.h"
 int type=0; //为1是xml文件，为2是HTML文件
 char *buffer;
 tag activetag;  //当前查询语句的活动节点，只能有一个
@@ -146,7 +147,7 @@ char* filterspace_xml(char *s)  //被过滤的字串的第一个字符必须是空格。即碰到空格
 								len=resize(&end,&begin,len);
 char * getword(char **s,int *flag)  
 {
-	char *temp=(char *)malloc(maxsize);//设置一个缓冲区,这里面设置的缓冲区的大小太大了，应该动态进行
+	char *temp=(char *)angel_sys_malloc(maxsize);//设置一个缓冲区,这里面设置的缓冲区的大小太大了，应该动态进行
 	char *p=temp;
 	int use;
 	*s=filterspace_xml(*s);
@@ -282,7 +283,7 @@ void addtagchildren(tag parent,tag child)
 
 char *getnchar(char **s,int count)
 {
-	char *ret=(char *)malloc(count+1),*p;
+	char *ret=(char *)angel_sys_malloc(count+1),*p;
 	p=ret;
 	while(count>0)
 	{
@@ -300,8 +301,8 @@ char * dealtag(char *s, stack tagstack,tag *res,int *flag)    //这就相当于一个词
 {
 #define EXIT {*flag=mod; free(t->c) ; free(t); return NULL;}
 	int mod,use;
-	tag t=(tag)malloc(sizeof(tagnode));
-	t->c=(content)malloc(sizeof(contentnode));
+	tag t=(tag)angel_sys_malloc(sizeof(tagnode));
+	t->c=(content)angel_sys_malloc(sizeof(contentnode));
 	t->c->fistattr=NULL;
 	t->neighbor=NULL;
 	t->firstchild=NULL;
@@ -325,7 +326,7 @@ begin:
 		while(*s!='>' && *s!='/')//检测到结束标志(分为单标签结束和双标签结束)为止，来分别填充标签的属性信息
 		{
 		//这里需要获得属性的值
-			attr a=(attr)malloc(sizeof(attrnode));   //注意这里的节点的定义必须放在循环体中。
+			attr a=(attr)angel_sys_malloc(sizeof(attrnode));   //注意这里的节点的定义必须放在循环体中。
 			a->key=a->value=NULL;
 			mod=3;
 			a->key=getword(&s,&mod);
@@ -362,7 +363,7 @@ begin:
 			if(type==1 && strcmp(t->name,"script")==0)  //这是处理html代码中的script标签
 			{
 				int len=maxsize;
-				char *text=(char *)malloc(len),*p;
+				char *text=(char *)angel_sys_malloc(len),*p;
 				p=text;
 				while(*s)
 				{
@@ -477,8 +478,8 @@ char * checkdoctype(char *s)
 xmlres  xmlanalysis(char *buffer,int *ret)
 {
 	char *p;
-	stack s=(stack)malloc(sizeof(stacknode));
-	xmlres result=(xmlres)malloc(sizeof(xmlresnode));
+	stack s=(stack)angel_sys_malloc(sizeof(stacknode));
+	xmlres result=(xmlres)angel_sys_malloc(sizeof(xmlresnode));
 	s->top=-1;
 	p=checkdoctype(buffer);//设置扫描指针
 	switch(type)
@@ -522,10 +523,10 @@ end:
 }
 xml initxml()
 {
-	xml x=(xml)malloc(sizeof(xmlnode));
+	xml x=(xml)angel_sys_malloc(sizeof(xmlnode));
 	x->len=0;
 	x->alloc_size=xmlsize;
-	x->xmltag=(tag *)calloc(x->alloc_size,sizeof(tag));
+	x->xmltag=(tag *)angel_sys_calloc(x->alloc_size,sizeof(tag));
 	return x;
 }
 void addxml(xml x,tag t)
@@ -593,7 +594,7 @@ xml findallbyname_b(tag t,char *name)  //树的广度优先遍历
 	 xml x=initxml();
 	int index=0;
 	tag p=t;      //设置扫描指针
-	queue q=(queue)malloc(sizeof(queuenode));
+	queue q=(queue)angel_sys_malloc(sizeof(queuenode));
 	q->front=q->rear=0;
 	inqueue(q,p);
 	while(!queueempty(q))

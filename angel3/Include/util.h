@@ -21,7 +21,7 @@ char* tointchar(int64_t a);
 
 char *getstrcat(char *des,char *src);
 char *tonative(object_string s);
-char *tomult(object_string s);
+char *tomult(object_string s,int *size = NULL);
 char *towide_n(char *s,int *reslen);
 char *towide(char *s,int *reslen);
 
@@ -33,7 +33,6 @@ int UnicodeToGbk(uint16_t *unicode_buf, char *gbk_buf,int);
 
 
 
-object checkpatternparam(object pattern);
 
 
 

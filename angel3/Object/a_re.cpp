@@ -13,7 +13,6 @@
 
 
 #include <stdlib.h>
-#include <memory>
 #include "data.h"
 #include "lib.h"
 #include "shell.h"
@@ -25,10 +24,10 @@ regelement parsereg(object_regular or,wchar end = 0);
 
 wchars initwchars()
 {
-	wchars ret = (wchars)malloc(sizeof(wcharsnode));
+	wchars ret = (wchars)angel_sys_malloc(sizeof(wcharsnode));
 	ret->alloc = ret->size = 0;
 	ret->alloc = reg_base_size;
-	ret->ws = (wchar *)calloc(reg_base_size,sizeof(wchar));
+	ret->ws = (wchar *)angel_sys_calloc(reg_base_size,sizeof(wchar));
 	return ret;
 }
 void addchar(wchars regarray,wchar el)
@@ -52,7 +51,7 @@ void addchar(wchars regarray,wchar el)
 #define ISWCHARSPACE(c) (c == ' ')
 regelement build()
 {
-	regelement el = (regelement)calloc(1,sizeof(regelementnode));
+	regelement el = (regelement)angel_sys_calloc(1,sizeof(regelementnode));
 	return el;
 }
 regelement buildescp(char metatype,char flag = 0)
@@ -513,13 +512,7 @@ regelement parsereg(object_regular or,wchar end)
 			clearregexp(ret);
 			return NULL;
 		}
-		if(!CUR)
-		{
-			angel_error("正则表达式结尾少了结束符！");
-			clearregexp(ret);
-			return NULL;
-		}
-		if(CUR == end)
+		if(!CUR || CUR == end)
 			break ;
 		SKIP(1);
 	}
@@ -820,19 +813,19 @@ object_regular are_compile(wchar *pattern) //编译模式串
 	ret->alternation_count = 0;
 	ret->repeat_item_count = 0;
 	ret->group_count = 0;
-	regelement root = parsereg(ret,'/');
+	regelement root = parsereg(ret,0);
 	if(root == NULL) return NULL;
 	if(ret->alternation_count > 0)
-		ret->or_jump_set = (int16_t *)calloc(ret->alternation_count,sizeof(int16_t));
+		ret->or_jump_set = (int16_t *)angel_sys_calloc(ret->alternation_count,sizeof(int16_t));
 	ret->alternation_count = 0;
 	ret->repeat_predict_set = initcollection();
 	compile_element(root,ret);
 	ADDBYTE(CODE_EXIT);
-	ret->match_record = (int *)calloc(ret->repeat_item_count,sizeof(int));
-	ret->repeat_for_duplicate_record = (int *)calloc(ret->repeat_count,sizeof(int));
+	ret->match_record = (int *)angel_sys_calloc(ret->repeat_item_count,sizeof(int));
+	ret->repeat_for_duplicate_record = (int *)angel_sys_calloc(ret->repeat_count,sizeof(int));
 	initpredict(ret);
-	ret->group = (state *)calloc(100,sizeof(state));
-	void *res = calloc(100,sizeof(statenode));
+	ret->group = (state *)angel_sys_calloc(100,sizeof(state));
+	void *res = angel_sys_calloc(100,sizeof(statenode));
 	for(int i = 0; i < 100; i++){
 		ret->group[i] = &((statenode *)res)[i];
 	}
@@ -852,12 +845,12 @@ inline void pushstate(collection g_state,int index,char *code,int isgreedy = 1)
 	if(g_state->size < g_state->alloc) {
 		s = (state)g_state->element[g_state->size++];
 		if(!s) {
-			s = (state)malloc(sizeof(statenode));
+			s = (state)angel_sys_malloc(sizeof(statenode));
 			g_state->element[g_state->size-1] = s;
 		}
 	}
 	else {
-		s = (state)malloc(sizeof(statenode));
+		s = (state)angel_sys_malloc(sizeof(statenode));
 		addcollection(g_state,s);
 	}
 	s->index = index;

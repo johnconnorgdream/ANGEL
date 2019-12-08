@@ -6,8 +6,8 @@
 统一进行垃圾回收，但需要在有些计算中使用，对列表和字符串的连接运算中只需要回收angel_ref2的
 
 */
-lib struct
 
+lib struct
 ismatrix(a)
 {
 	if(type(a) != 'array')
@@ -126,12 +126,10 @@ linkmultmatrix(n,d)
 {
 	p = matrix(n,0)
 	res = []
-	for(i in 0~n-1)
-	{
-		for(j in i+1~n-1)
-		{
+	for(i in 0~n-1) {
+		for(j in i+1~n-1) {
 			max = 0
-			for(k in i~j-1){
+			for(k in i~j-1) {
 				 temp = max
 				 max = max(p[i][k]+p[k+1][j]+d*d*d,max)
 				 if(temp != max)
@@ -144,7 +142,8 @@ linkmultmatrix(n,d)
 	ret [res,p]
 }
 //贪心算法的经典例子
-class hufnode{
+class hufnode
+{
 	this(al=null,fr=0,le=null,ri=null)
 	{
 		this.al = al
@@ -172,8 +171,7 @@ gettwo(li)
 		pel = p.el
 		min1el = min1.el
 		min2el = min2.el
-		if(pel.fr < min1el.fr)
-		{
+		if(pel.fr < min1el.fr) {
 			if(min1el.fr < min2el.fr)
 				min2 = min1
 			min1 = p
@@ -476,16 +474,18 @@ class btree{
 //bug：自从加了切片赋值以后出现内存回收错误即函数栈有异常0x000028
 //但是对于initslice中加了ASCREF(range和base)之后就好了
 //另外将原来的initslice换成slicelist之后就出现了NULL等错误
-times = 100
+times = 10000
 m = ['a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z']
 l = m * times
 size = m.size()
-print(l.size())
-loopbtree = (){
+print(l.size())bt = btree.this(3)for(item in l) {bt.add(item)}
+/*
+loopbtree() {
 	i = 0
-	while(i<1000){
+	looptimes = 100
+	while(i<looptimes) {
 		bt = btree.this(3)
-		for(item in l) bt.add(item)
+		for(item in l) {bt.add(item)}
 		i = i + 1
 	}
 	print('done!')

@@ -7,9 +7,9 @@ extern "c"{
 
 #include "lib.h"
 
-#define UNCERTAIN_USER 1
-#define CERTAIN_USER 2
-#define UNCERTAIN_LIB 3
+#define UNCERTAIN_USER (1<<4)
+#define CERTAIN_USER (2<<4)
+#define UNCERTAIN_LIB (3<<4)
 
 
 

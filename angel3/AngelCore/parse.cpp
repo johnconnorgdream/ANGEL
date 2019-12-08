@@ -1,4 +1,3 @@
-#include <memory.h>
 #include <stdlib.h>
 #include <string.h>
 #include "parse.h"
@@ -139,8 +138,8 @@ int quicksort(_switch *a,int low,int high)//¿ìËÙÅÅÐòµÄºËÐÄÊÇÃ¿´ÎÈ·¶¨Ò»¸öÎ»ÖÃ
 
 fun initfuncontrol(char *funname,int type=0)
 {
-	fun f=(fun)malloc(sizeof(funnode));
-	memset(f,0,sizeof(funnode));
+	fun f=(fun)angel_sys_malloc(sizeof(funnode));
+	angel_sys_memset(f,0,sizeof(funnode));
 	f->type=type;
 	f->local_v_map=init_perpetual_set();
 	f->class_context = NULL;
@@ -160,7 +159,7 @@ char * multitowide(char *value)
 
 
 
-
+token end_token;
 int checkparamfomat(int i);
 token gettop(tstack s)
 {
@@ -202,8 +201,8 @@ token pop(tstack s)
 }
 token copytoken(token p)
 {
-	token t=(token)malloc(sizeof(tokennode));
-	memcpy(t,p,sizeof(tokennode));
+	token t=(token)angel_sys_malloc(sizeof(tokennode));
+	angel_sys_memcpy(t,p,sizeof(tokennode));
 	t->first=t->second=NULL;
 	return t;
 }
@@ -223,7 +222,7 @@ void addtoken(token t,token s)
 }
 token maketokenEX(int id,void *attr,token first,token second)
 {
-	token t=(token)calloc(1,sizeof(tokennode));
+	token t=(token)angel_sys_calloc(1,sizeof(tokennode));
 	t->id=id;
 	t->attr=attr;
 	t->first = first;
@@ -233,6 +232,13 @@ token maketokenEX(int id,void *attr,token first,token second)
 token maketoken(int id,void *attr)
 {
 	return maketokenEX(id,attr,NULL,NULL);
+}
+token endtoken()
+{
+	if(end_token == NULL){
+		end_token = maketoken(END,0);
+	}
+	return end_token;
 }
 void deletetoken(token t)   //ÀûÓÃºóÐò±éÀú½«½Úµã¾ùÉ¾³ýµô
 { 
@@ -324,7 +330,8 @@ int priority(token t)  //ÒÔºóÍ¨¹ýÀ©Õ¹Õâ¸öº¯ÊýµÄ¹¦ÄÜÀ´Ôö¼Ó¸ú¶àµÄÔËËã£¬²¢È·¶¨ÓÅÏÈ¼
 		return 19;
 	case SELFSUB:
 		return 19;
-	case MAKEFUN:
+	case MAKEFUN:  //Î´À´»áÉý¼¶µ½·´Éä²Ù×÷REFLECT
+	case DYNAMIC_CALL:
 		return 20;
 	case INDEX:
 		return 21;
@@ -336,7 +343,7 @@ int priority(token t)  //ÒÔºóÍ¨¹ýÀ©Õ¹Õâ¸öº¯ÊýµÄ¹¦ÄÜÀ´Ôö¼Ó¸ú¶àµÄÔËËã£¬²¢È·¶¨ÓÅÏÈ¼
 }
 void addcode(code c,char *s)   //Î²²å·¨
 {
-	code p=(code)malloc(sizeof(codenode));
+	code p=(code)angel_sys_malloc(sizeof(codenode));
 	p->code=s;
 	for(;c->next;c=c->next);  //×¢ÒâÕâÀï
 	p->next=NULL;
@@ -394,7 +401,7 @@ char *getstrvalue(char **s,char endflag)   //ÕâÀïÊÇ×Ö·û´®¸´ÖÆµÄ·½·¨
 		    count++;
 		p++;
 	}
-	res = (char *)calloc(count+1,sizeof(char));
+	res = (char *)angel_sys_calloc(count+1,sizeof(char));
 	p = res;
 	(*s)++ ; //¹ýÂËµÚÒ»¸ö'ºÅ
 	while(**s)
@@ -452,9 +459,9 @@ char *getnumber(char **s)
 			break ;
 		(*s)++;
 	}
-	res = (char *)calloc(count+2,sizeof(char));
+	res = (char *)angel_sys_calloc(count+2,sizeof(char));
 	*res++ = flag;
-	memcpy(res,*s-count,count);
+	angel_sys_memcpy(res,*s-count,count);
 	return res-1;
 }
 inline int isquota(char s)
@@ -466,7 +473,7 @@ inline int isquota(char s)
 char *getword(char **s)
 {
 #define SCAN {(*s)++; wordlen++;}
-#define BUILDSTR res = (char *)calloc(wordlen+1,sizeof(char));	memcpy(res,*s-wordlen,wordlen);
+#define BUILDSTR res = (char *)angel_sys_calloc(wordlen+1,sizeof(char));	angel_sys_memcpy(res,*s-wordlen,wordlen);
 #define GETTOKEN while(**s!=' ' && **s!='\n' && **s!='\t' && !issensitive(**s) && **s) SCAN
 	char *res;
 	int wordlen=0;
@@ -519,7 +526,7 @@ char *checkword(char *s)
 }
 char *getimport(char **s)
 {
-	char *res=(char *)malloc(100),*p;
+	char *res=(char *)angel_sys_malloc(100),*p;
 	p=res;
 	*s=filterspace(*s);
 	while(**s && **s!='\n' && **s!='/t' && **s!=' ')
@@ -530,7 +537,7 @@ char *getimport(char **s)
 int predeal_s(FILE *f,code c)  //ÓÃ%importÀ´ÒýÈëÔ´ÎÄ¼þ
 {
 	int filelen=getfilelen(f);
-	char *buffer=(char *)malloc(filelen),*p,ch;
+	char *buffer=(char *)angel_sys_malloc(filelen),*p,ch;
 	p=buffer;
 	ch=fgetc(f);
 	if((unsigned char)ch==0xef)
@@ -626,8 +633,8 @@ int predeal_s(FILE *f,code c)  //ÓÃ%importÀ´ÒýÈëÔ´ÎÄ¼þ
 }
 code predeal(FILE *f)
 {
-	code c=(code)malloc(sizeof(code)); //½¨Á¢Ò»¸öÍ·½Úµã
-	memset(c,0,sizeof(codenode));
+	code c=(code)angel_sys_malloc(sizeof(code)); //½¨Á¢Ò»¸öÍ·½Úµã
+	angel_sys_memset(c,0,sizeof(codenode));
 	if(!predeal_s(f,c))
 		return NULL;
 	return c;
@@ -641,7 +648,7 @@ int gettoken(char *code)
 	word=getword(&p);
 	while(*word || *p)
 	{
-		token tk = (token)calloc(1,sizeof(tokennode));
+		token tk = (token)angel_sys_calloc(1,sizeof(tokennode));
 		if(*(p-1)=='\'' || *(p-1)=='\"')
 		{
 			tk->id=STR;
@@ -667,7 +674,7 @@ int gettoken(char *code)
 				{
 					if(*ts == '\n')  //±íÃ÷retºóÃæÓÐ»»ÐÐ·û
 					{
-						t[tokenlen++] = maketoken(END,0);
+						t[tokenlen++] = endtoken();
 						break ;
 					}
 					ts++;
@@ -719,8 +726,8 @@ void copytree(token src,token *des)  //ÍêÕûµÄ¸³Öµ±í´ïÊ½Ê÷
 {
 	if(src)
 	{
-		*des=(token)malloc(sizeof(tokennode));   //ÒòÎª´«ÈëµÄdes¿Ï¶¨Ö¸Ïò¿Õ
-		memcpy(*des,src,sizeof(tokennode));   //ÔÙ½«×óÓÒ×ÓÊ÷ÖÃ¿Õ
+		*des=(token)angel_sys_malloc(sizeof(tokennode));   //ÒòÎª´«ÈëµÄdes¿Ï¶¨Ö¸Ïò¿Õ
+		angel_sys_memcpy(*des,src,sizeof(tokennode));   //ÔÙ½«×óÓÒ×ÓÊ÷ÖÃ¿Õ
 		copytree(src->first,&(*des)->first);
 		copytree(src->second,&(*des)->second);
 	}
@@ -1277,13 +1284,16 @@ int isfunctiondef(int pos,int *util = NULL)
 		return 1;
 	return 0;
 }
-int islambda(int pos)
+int islambdaordynamiccall(int pos,int ispreoper)  //2Îª¶¯Ì¬µ÷ÓÃº¯Êý£¬1Îªlambdaº¯Êý£¬0´ú±íÊ²Ã´¶¼²»ÊÇ
 {
 	int next = detectbracket(pos,LBRACKETL);
 	if(next == -1)
 		return 0;
-	if(t[next]->id == BBRACKETL)
-	{
+	if((ISEND(next) || t[next]->id != BBRACKETL) && ispreoper){  //¶¯Ì¬µ÷ÓÃº¯Êý
+		t[next-1]->id = END;
+		return 2;
+	}
+	if(!ISEND(next) && t[next]->id == BBRACKETL){
 		t[next-1]->id = END;
 		return 1;
 	}
@@ -1320,7 +1330,7 @@ token gettree(int *pos,int *error,int endid,fun f)   //¿ÉÒÔ½«µã¿´×öÊÇÔËËã·û£¬ÈôÓ
 	while(!ISSENTENCEEND(pos))  //ÕâÀï±íÕ÷ÁË»ñÈ¡±í´ïÊ½¿ÉÒÔÒÔ·ÖºÅ½áÊøÒ²¿ÉÒÔÒÔ¶ººÅ½áÊø¡£
 	{
 		//ÕâÀïÃæµÄ·ÖÖ§¼°ÆäÌõ¼þÊÇºËÐÄ£¬·ÖÀàÖ÷ÒªÒÔÆäÐÐÎªÎª±ê×¼·ÖµÄ
-		if(t[*pos]->id==NAME || t[*pos]->id==TRUE || t[*pos]->id==FALSE ||(t[*pos]->id<= BOOLEAN && t[*pos]->id>= NU)|| t[*pos]->id==CLASS || t[*pos]->id==GLOBAL || t[*pos]->id==ORD_SENTEN || t[*pos]->id==GRAMROOT)  //ÕâÀïÐèÒªÀ©Õ¹×Ö·û´®µÄ²Ù×÷£¬¶ø×Ö·û´®Ä¿Ç°Ö»ÓÐ+ºÍ*£¨±ØÐëºÍÕûÐÎÊý×Ö£©
+		if(t[*pos]->id == NAME || t[*pos]->id==TRUE || t[*pos]->id==FALSE ||(t[*pos]->id<= BOOLEAN && t[*pos]->id>= NU)|| t[*pos]->id==CLASS || t[*pos]->id==GLOBAL || t[*pos]->id==ORD_SENTEN || t[*pos]->id==GRAMROOT)  //ÕâÀïÐèÒªÀ©Õ¹×Ö·û´®µÄ²Ù×÷£¬¶ø×Ö·û´®Ä¿Ç°Ö»ÓÐ+ºÍ*£¨±ØÐëºÍÕûÐÎÊý×Ö£©
 		{
 			//´íÎóÌáÊ¾¹¦ÄÜ
 			DEALOPER
@@ -1503,12 +1513,25 @@ newbeg:
 			{
 				if(t[*pos]->id==LBRACKETL)  //¿ÉÄÜÊÇlambadaº¯Êý
 				{
-					if(islambda((*pos)+1))  //¿Ï¶¨ÊÇº¯Êý¶¨ÒåÁË
+					int lambada_flag = islambdaordynamiccall((*pos)+1,ispreoper);
+					if(lambada_flag == 1)  //¿Ï¶¨ÊÇº¯Êý¶¨ÒåÁË
 					{
 						DEALOPER;
 						goto fundef;
 					}
-
+					else if(lambada_flag == 2) //¶¯Ì¬µ÷ÓÃ
+					{
+						token dynamic_call = t[*pos];
+						token call_param = maketoken(GRAMROOT,0);
+						if(0 == dealfunccall(call_param,pos,f))
+							goto reterror;
+						(*pos) -= 2;
+						dynamic_call->id = DYNAMIC_CALL;
+						call_param->id = GRAMROOT;
+						t[(*pos)] = dynamic_call;
+						t[(*pos)+1] = call_param;
+						goto checktokenend;
+					}
 				}
 				if(stackempty(os) && t[*pos]->id==LBRACKETR)  //Èç¹û³öÏÖÀ¨ºÅ²»Æ¥Åä£¬ÓÒÀ¨ºÅ¶àÒ»¸ö
 				{
@@ -1686,8 +1709,8 @@ token dealtoken(int flag,int *i,fun f)  //Õâ½ö½öÊÇÖ÷³ÌÐòÓï·¨²úÉúµÄÓï·¨Ê÷¡£
 //scope_parallel_numÊÇ¿ØÖÆÓï¾äÖÐµÄ¾Ö²¿±äÁ¿µÄË®Æ½¿Õ¼ä£¬¶øÃ¿¸ötokenÀï·ÅµÄÊÇ´¹Ö±¿Õ¼ä£¬Ã¿¸ö´¹Ö±¿Õ¼ä³ÊµÝ¸øÉÏÒ»¼¶µÄË®Æ½¿Õ¼ä	
 //#define SET_SCOPE_VALUE_INDEX_BEGIN(st) if(scopet) st->s_extra = scopet->s_extra; else st->s_extra = -1;
 #define ISPARSEASLIB (!global_class_env && !f && islib == 1)
-	token root=(token)malloc(sizeof(tokennode));  //×ÜµÄÓï·¨¸ù½Úµã
-	memset(root,0,sizeof(tokennode));
+	token root=(token)angel_sys_malloc(sizeof(tokennode));  //×ÜµÄÓï·¨¸ù½Úµã
+	angel_sys_memset(root,0,sizeof(tokennode));
 	root->id=GRAMROOT;   //¶ÔÓÚÓï·¨¸ù½Úµã
 	int scope_parallel_num = 0;
 	if((*i) >= tokenlen) {
@@ -1785,8 +1808,8 @@ token dealtoken(int flag,int *i,fun f)  //Õâ½ö½öÊÇÖ÷³ÌÐòÓï·¨²úÉúµÄÓï·¨Ê÷¡£
 				if(t[(*i)++]->id==BBRACKETL)
 				{
 					int tablelen=10,isdefault=0;
-					switchtable st_table=(switchtable)malloc(sizeof(switchtable));
-					st_table->sw_item=(_switch *)calloc(tablelen,sizeof(_switchnode));
+					switchtable st_table=(switchtable)angel_sys_malloc(sizeof(switchtable));
+					st_table->sw_item=(_switch *)angel_sys_calloc(tablelen,sizeof(_switchnode));
 					st_table->len=0;
 					token mergetoken = maketoken(0,0);
 					while(1)
@@ -1795,7 +1818,7 @@ token dealtoken(int flag,int *i,fun f)  //Õâ½ö½öÊÇÖ÷³ÌÐòÓï·¨²úÉúµÄÓï·¨Ê÷¡£
 						{				
 	tocase:
 							token casetoken=maketoken(CASE_SENTEN,0);
-							_switch st=(_switch)malloc(sizeof(_switchnode));
+							_switch st=(_switch)angel_sys_malloc(sizeof(_switchnode));
 							if(t[(*i)++]->id==CASE)
 							{
 								if(t[*i]->id==STR)
@@ -1933,8 +1956,8 @@ token dealtoken(int flag,int *i,fun f)  //Õâ½ö½öÊÇÖ÷³ÌÐòÓï·¨²úÉúµÄÓï·¨Ê÷¡£
 			else if(temp->id==LOOP)
 			{
 				token looptoken,temp;
-				looptoken=(token)malloc(sizeof(tokennode));
-				memset(looptoken,0,sizeof(tokennode));
+				looptoken=(token)angel_sys_malloc(sizeof(tokennode));
+				angel_sys_memset(looptoken,0,sizeof(tokennode));
 				looptoken->id=LOOP_SENTEN;
 
 
@@ -2166,8 +2189,8 @@ void init()   //ËùÓÐµÄÏú»ÙºÍ³õÊ¼»¯´úÂë¶¼ÔÚÕâÀï
 	global_value_map=init_perpetual_set();
 	global_function_map=init_perpetual_set();
 	class_map = init_perpetual_set();
-	op_stack1 = (tstack)calloc(1,sizeof(tstacknode));
-	op_stack2 = (tstack)calloc(1,sizeof(tstacknode));
+	op_stack1 = (tstack)angel_sys_calloc(1,sizeof(tstacknode));
+	op_stack2 = (tstack)angel_sys_calloc(1,sizeof(tstacknode));
 
 	init_const_pool();
 	init_lib_func_map();
@@ -2176,8 +2199,8 @@ void init()   //ËùÓÐµÄÏú»ÙºÍ³õÊ¼»¯´úÂë¶¼ÔÚÕâÀï
 
 	
 
-	clist=(classlist)calloc(1,sizeof(classlistnode));
-	_global_sw_list=(switchlist)calloc(1,sizeof(switchlistnode));
+	clist=(classlist)angel_sys_calloc(1,sizeof(classlistnode));
+	_global_sw_list=(switchlist)angel_sys_calloc(1,sizeof(switchlistnode));
 
 
 	
@@ -2604,12 +2627,12 @@ void mergesharedmemory()
 	//ËùÓÐÈ·¶¨ÏÂÀ´µÄ¾²Ì¬ÄÚ´æ¶¼Ó¦¸ÃÓÃÏµÍ³ÉêÇë£¬ÕâÑù±ÜÃâÁË²»±ØÒªµÄ´íÎó
 	object *addr = dynamic_name->item;
 	sys_realloc_list(dynamic_name,dynamic_name->len);
-	memcpy(dynamic_name->item,addr,dynamic_name->len*sizeof(object));
+	angel_sys_memcpy(dynamic_name->item,addr,dynamic_name->len*sizeof(object));
 	sys_realloc_list(global_value_list,obj_list->len+global_value_list->len);
 	addr = global_value_list->item+obj_list->len;
 	for(int i = 0; i < global_value_list->len; i++)
 	{
-	//	memset(global_value_list->item+obj_list->len,0,global_value_list->len*sizeof(object));
+	//	angel_sys_memset(global_value_list->item+obj_list->len,0,global_value_list->len*sizeof(object));
 		addr[i] = angel_uninitial;
 	}
 
@@ -2646,10 +2669,16 @@ int function_call(token t,fun pref)  //ËüÓëmem_call×î´óµÄ²»Í¬Ö®Ò»ÊÇËûÊÇÒ»¸öÔ­×Ó²
 	//ÕâÀïÊ×ÏÈÓÃnop´úÌæ£¬ÒòÎª²»ÖªµÀ¸Ãº¯ÊýÊÇ·ñÊÇ³ÉÔ±º¯Êý
 	
 	//¶ÔÓÚcall_dµÄ·½Ê½¿ÉÒÔ³¢ÊÔÓÃexec_enviromnet-1µÄÐÎÊ½µÃµ½this¶ÔÏó£¬ÒòÎªÎÒÃÇÓÐÑÏ¸ñµÄ·½Ê½À´±£Ö¤thisÔÚÕ»¶¥Î»ÖÃ
-	count=pushparam(t->first,pref);
+	token param = t->first;
+
+	count=pushparam(param, pref);
 	if(count == -1)
 		return 0;
-
+	if(t->id == DYNAMIC_CALL)
+	{
+		t = t->second;
+		goto callback;
+	}
 	if(pref && t->extra!=GLOBAL)  //ÕâÀïÐèÒª½¨Á¢Ò»¸ötokenÁÐ±í±£´æÕâÀïµÄµ÷ÓÃÓï¾äÒÔ±ãÊµÏÖ¶¯Ì¬±àÒë£¬×î´ó¿ÉÄÜµÄ¼õÉÙ×Ö½ÚÂëµÄ¸öÊý
 	{
 		if(pref->type!=0) //Èç¹ûÊÇÌØÊâº¯Êý
@@ -2675,8 +2704,9 @@ int function_call(token t,fun pref)  //ËüÓëmem_call×î´óµÄ²»Í¬Ö®Ò»ÊÇËûÊÇÒ»¸öÔ­×Ó²
 	
 	if(foffset==-1)
 	{
-		//µ÷ÓÃ»Øµôº¯Êý
 		t->id = NAME;
+callback:
+		//µ÷ÓÃ»Øµôº¯Êý
 		foffset = genunarycodewithres(t,_mov_local,pref);
 		if(foffset == -1)
 			return 0;
@@ -3151,7 +3181,7 @@ int pushdefaultparam(fun f)
 	//´¦Àí²¢´«ÈëÄ¬ÈÏ²ÎÊý
 	unsigned long i=f->default_paracount;
 	int default_index = f->paracount - f->default_paracount;
-	f->base_addr=(unsigned long *)calloc(f->default_paracount+1,sizeof(unsigned long));
+	f->base_addr=(unsigned long *)angel_sys_calloc(f->default_paracount+1,sizeof(unsigned long));
 	if(!f->default_para)
 	{
 		f->base_addr[0]=angel_byte->len;
@@ -3666,6 +3696,13 @@ int calccore(token t,fun f)
 	case BITXOR:
 		res = genbinarycodewithres(t,_bitwise_xor_shared_local,f);
 		break ;
+	case DYNAMIC_CALL:
+		t->second->second = t->first;
+		t->second->id = DYNAMIC_CALL;
+		if(!function_call(t->second,f))
+			return 0;
+		res = t->first->extra;
+		break ;
 	default:
 		res = 0;
 		angel_error("±àÒë³ö´í£¡");
@@ -4158,7 +4195,7 @@ int parse_switch(token t,fun f)
 	}
 	if(!swb->sw_item[swb->len]) //ËµÃ÷ÓÐdefault
 	{
-		_switch s=(_switch)malloc(sizeof(_switchnode));
+		_switch s=(_switch)angel_sys_malloc(sizeof(_switchnode));
 		s->offset=angel_byte->len;
 		swb->sw_item[swb->len]=s;
 	}
@@ -4357,14 +4394,14 @@ int parse_angel(token root)
 {
 	//ÕâÀïÖ÷ÒªÊÇ½«Óï·¨Ê÷½âÎö³ÉÖÐ¼ä´úÂë£¬Ò»°ãÏÈ½âÎöÖ÷³ÌÐò´úÂëÔÚ½âÎöº¯Êý´úÂë¡£
 	object o;
-	angel_temp = (temp_alloc_info)calloc(1,sizeof(temp_alloc_infonode));
+	angel_temp = (temp_alloc_info)angel_sys_calloc(1,sizeof(temp_alloc_infonode));
 
 	dynamic_name = init_perpetual_list();
 	dynamic_name->len++;
 	main_byte = initbytearray();
 	angel_byte = main_byte;
-	brand = (codemap)calloc(1,sizeof(codemapnode));
-	ctrl_state = (tstack)calloc(1,sizeof(tstacknode));  //Õâ¸ö¿ØÖÆÁ÷Õ»Ò²¿ÉÒÔÎªÎ´À´µÄ±äÁ¿µÄ×÷ÓÃ·¶Î§µÄÈ·¶¨·þÎñ
+	brand = (codemap)angel_sys_calloc(1,sizeof(codemapnode));
+	ctrl_state = (tstack)angel_sys_calloc(1,sizeof(tstacknode));  //Õâ¸ö¿ØÖÆÁ÷Õ»Ò²¿ÉÒÔÎªÎ´À´µÄ±äÁ¿µÄ×÷ÓÃ·¶Î§µÄÈ·¶¨·þÎñ
 	ctrl_state->top = -1;
 	global_scope = initlink();
 	global_current_scope = global_scope;

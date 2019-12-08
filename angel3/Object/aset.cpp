@@ -10,7 +10,7 @@ object_set initset(int count)
 	res->type = SET;
 	res->alloc_size = count;
 	res->element = (object *)angel_alloc_page((object)res,count*sizeof(object));
-	memset(res->element,0,count*sizeof(object));
+	angel_sys_memset(res->element,0,count*sizeof(object));
 	res->len = 0;
 	return res;
 }
@@ -20,7 +20,7 @@ void resizeset(object_set os)
 	os->alloc_size *= 2;
 	object *newaddr = (object *)angel_alloc_page((object)os,os->alloc_size*sizeof(object));
 	object *addr = os->element;
-	memset(newaddr,0,os->alloc_size*sizeof(object));
+	angel_sys_memset(newaddr,0,os->alloc_size*sizeof(object));
 	os->element = newaddr;
 	os->len = 0;
 	//ÖØ·Ö²¼

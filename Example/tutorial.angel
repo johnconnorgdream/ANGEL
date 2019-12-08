@@ -1,29 +1,13 @@
-lib test
-count = 0
-fa(a) {
-	count++;
-	if(a == 1 || a == 0)
-		ret 1
-	ret fa(a - 1) + fa(a - 2)
+l = [
+(){
+	printl('hello world1')
+},
+(a){
+	printl('hello world'+a)
+}]
+d = {
+	'a':(){
+		printl('hello a')
+	}
 }
-
-println(s) {
-	print(s+'\n')
-}
-
-print_r(s){
-	println(s)
-}
-
-i = 'I'
-h = ' have '
-ai = ' a '
-d = ' dream '
-times = 1000000
-//parse -f f:\\dynamic.rule
-//lsbytype('c:\\','c')
-l = [1, 2, 3, 4, 5, 6, 7, 8] * times
-m = [9, 8, 1, 7, 8] * times
-size = times * 5
-printl(size)
-println('parse -f f:\\dynamic.rule')
+d['a']()

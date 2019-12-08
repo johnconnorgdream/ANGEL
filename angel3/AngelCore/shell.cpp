@@ -43,7 +43,7 @@ char **getenvpath(char *path)
 		}
 	}
 	p = path;
-	char **res = (char **)malloc(count+1);
+	char **res = (char **)angel_sys_malloc(count+1);
 	for(int i=0; i<count; i++)
 	{
 		res[i] = p;
@@ -60,14 +60,14 @@ char *getcurrentdir()
 	//获取字节长度   
 	int iLength = WideCharToMultiByte(CP_ACP, 0, filename, -1, NULL, 0, NULL, NULL);
 	//将tchar值赋给_char
-	char *res = (char *)calloc(1,iLength);
+	char *res = (char *)angel_sys_calloc(1,iLength);
 	WideCharToMultiByte(CP_ACP, 0, filename, -1, res, iLength, NULL, NULL);
 	return res;
 }
 option *parse_option(int argc,char **argv)
 {
 	int i = 1;
-	option *res = (option *)calloc(1,sizeof(optionnode));
+	option *res = (option *)angel_sys_calloc(1,sizeof(optionnode));
 	while(i < argc)
 	{
 		char *optstr = argv[i++];
@@ -104,7 +104,7 @@ char *read_line(FILE *f)
 {
 	int len=read_base_size;
 	char *line,*p;
-	line=(char *)malloc(len);
+	line=(char *)angel_sys_malloc(len);
 	p=line;
 	char c=fgetc(f);
 	if((unsigned char)c==0xef)
@@ -673,14 +673,14 @@ void setangelenv()
 	if(!f)
 	{
 		alloc=1;
-		directory=(char **)calloc(alloc,sizeof(char *));
+		directory=(char **)angel_sys_calloc(alloc,sizeof(char *));
 		angel_error("初始配置失败，看是否丢失angel.dir文件！");
 		return ;
 	}
 	else
 	{
 		alloc=10;
-		directory=(char **)calloc(alloc,sizeof(char *));
+		directory=(char **)angel_sys_calloc(alloc,sizeof(char *));
 	}
 	line=read_line(f);
 	while(line)
@@ -755,7 +755,7 @@ void printbyte(bytecode bc)
 
 char *getstrfomat(char *s,int len)
 {
-	char *p=s,*res=(char *)calloc(len+1,sizeof(char));
+	char *p=s,*res=(char *)angel_sys_calloc(len+1,sizeof(char));
 	char *q=res;
 	char c=*p++;
 	while(c!=0)
@@ -1025,6 +1025,9 @@ void _print(object o)  //这个函数的代码需要做邻接保护
 		break ;
 	case EXT_TYPE:
 		printextobj(o);
+		break ;
+	case NOTYPE:
+		break ;
 	default:
 		angel_error("不合法的数据类型");
 		break ;
@@ -1039,7 +1042,7 @@ void exec_shell()
 {
 	token res;
 	option *op = angel_option;
-	char *cmd=(char *)malloc(100);
+	char *cmd=(char *)angel_sys_malloc(100);
 
 
 	init_heap();

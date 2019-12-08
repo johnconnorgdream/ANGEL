@@ -1,6 +1,5 @@
 #include <string.h>
 #include <stdlib.h>
-#include <memory.h>
 #include "data.h"
 #include "lib.h"
 #include "execute.h"
@@ -13,7 +12,7 @@
 字符串的相关操作
 
 */
-#define STRCPY(s1,s2,len) memcpy(s1,s2,len); (s1)[len] = 0; (s1)[len+1] = 0;
+#define STRCPY(s1,s2,len) angel_sys_memcpy(s1,s2,len); (s1)[len] = 0; (s1)[len+1] = 0;
 
 
 object_string initchar(uint16_t c)
@@ -50,14 +49,14 @@ object_string initstring_n(char *c)   //对本地字符串的一种包装
 	if(*c)
 		res = towide_n(c,&len);
 	else
-		res = (char *)calloc(2,sizeof(char));
+		res = (char *)angel_sys_calloc(2,sizeof(char));
 	if(len == -1)
 	{
 		angel_error("编码失败！");
 		return NULL;
 	}
 	s=initstring(len);
-	memcpy(s->s,res,len);
+	angel_sys_memcpy(s->s,res,len);
 	*(int16_t *)(s->s+len) = 0;
 	free(res);
 	//free(c);
@@ -71,14 +70,14 @@ object_string initstring(char *c)
 	if(*c)
 		res = towide(c,&len);
 	else
-		res = (char *)calloc(2,sizeof(char));
+		res = (char *)angel_sys_calloc(2,sizeof(char));
 	if(len == -1)
 	{
 		angel_error("编码失败！");
 		return NULL;
 	}
 	s=initstring(len);
-	memcpy(s->s,res,len);
+	angel_sys_memcpy(s->s,res,len);
 	*(int16_t *)(s->s+len) = 0;
 
 	free(res);
@@ -161,7 +160,7 @@ object_string strrepeat(object_string s,int count)
 	object_string res = initstring(s->len*count);
 	for(i=0; i<count; i++)
 	{
-		memcpy(res->s+eachlen*i,s->s,eachlen);
+		angel_sys_memcpy(res->s+eachlen*i,s->s,eachlen);
 	}
 	*(uint16_t *)&res->s[s->len*count] = 0;
 	return res;
@@ -203,7 +202,7 @@ void joinstring(object_string ret,object join)  //这里要保证空间足够
 		int eachlen = 0;
 		if(ISSTR(item))
 		{
-			memcpy(fill_ptr,GETSTR(item)->s,GETSTR(item)->len);
+			angel_sys_memcpy(fill_ptr,GETSTR(item)->s,GETSTR(item)->len);
 			eachlen = GETSTR(item)->len;
 			fill_ptr += GETSTR(item)->len;
 		}
@@ -211,7 +210,7 @@ void joinstring(object_string ret,object join)  //这里要保证空间足够
 		{
 			int num ;
 			char *wide = towide(tointchar(GETINT(item)),&num);
-			memcpy(fill_ptr,wide,num);
+			angel_sys_memcpy(fill_ptr,wide,num);
 			eachlen = num;
 			fill_ptr += num;
 		}
@@ -227,6 +226,12 @@ void joinstring(object_string ret,object join)  //这里要保证空间足够
 object syssize_string(object o)
 {
 	return (object)initinteger(GETSTR(o)->len/2);
+}
+object sysbytes_string(object o)
+{
+	int len;
+	char *s = tomult(GETSTR(o),&len);
+	return (object)initbytes(s,len);
 }
 object sysjoin_string(object join,object o)
 {
@@ -251,7 +256,7 @@ object sysjoin_string(object join,object o)
 	}
 	object_string ret = initstring(allocsize);
 	char *fill_ptr = ret->s;
-	memcpy(fill_ptr,GETSTR(o)->s,GETSTR(o)->len);
+	angel_sys_memcpy(fill_ptr,GETSTR(o)->s,GETSTR(o)->len);
 	ret->len = GETSTR(o)->len;
 	joinstring(ret,join);
 	return (object)ret;
@@ -290,41 +295,35 @@ object syslower_string(object o)
 }
 object sysfind_string(object pattern,object range,object o)
 {
-	object regular = checkpatternparam(pattern);
-	if(!regular)
-	{
-		angel_error("字符串find方法第一个参数必须是字符串或者正则类型！");
-		return GETNULL;
-	}
+	
 	int res[2];
+	object ret;
 	if(!checkrangeparam(range,GETSTR(o)->len/2-1,res))
 	{
-		angel_error("字符串find方法第二个参数必须是range类型！");
+		angel_error("字符串findall方法第二个参数必须是range类型！");
 		return GETNULL;
 	}
-	object ret;
-	if(ISREGULAR(regular))  //表示此时是正则表达式
+	if(ISREGULAR(pattern))  //表示此时是正则表达式
 	{
-		ret = reg_find(GETREGULAR(regular),(wchar *)GETSTR(o)->s,res[0],res[1]);
+		ret = reg_find(GETREGULAR(pattern),(wchar *)GETSTR(o)->s,res[0],res[1]);
 		if(!ISREGULAR(pattern)) {
-			DECREF(regular);
+			DECREF(pattern);
 		}
 	}
-	else
+	else if(ISSTR(pattern))
 	{
 		ret = strfind((wchar *)GETSTR(o)->s,(wchar *)GETSTR(pattern)->s,
 			res[0],res[1],GETSTR(pattern)->len/2);
+	}
+	else
+	{
+		angel_error("字符串findall方法第一个参数必须是字符串或者正则类型！");
+		return GETNULL;
 	}
 	return ret;
 }
 object sysfindall_string(object pattern,object range,object o)
 {
-	object regular = checkpatternparam(pattern);
-	if(!regular)
-	{
-		angel_error("字符串findall方法第一个参数必须是字符串或者正则类型！");
-		return GETNULL;
-	}
 	int res[2];
 	if(!checkrangeparam(range,GETSTR(o)->len/2-1,res))
 	{
@@ -332,38 +331,39 @@ object sysfindall_string(object pattern,object range,object o)
 		return GETNULL;
 	}
 	object ret;
-	if(ISREGULAR(regular))  //表示此时是正则表达式
+	if(ISREGULAR(pattern))  //表示此时是正则表达式
 	{
-		ret = reg_findall(GETREGULAR(regular),(wchar *)GETSTR(o)->s,res[0],res[1]);
+		ret = reg_findall(GETREGULAR(pattern),(wchar *)GETSTR(o)->s,res[0],res[1]);
 		if(!ISREGULAR(pattern)) {
-			DECREF(regular);
+			DECREF(pattern);
 		}
 	}
-	else
+	else if(ISSTR(pattern))
 	{
 		ret = strfindall((wchar *)GETSTR(o)->s,(wchar *)GETSTR(pattern)->s,
 			res[0],res[1],GETSTR(pattern)->len/2);
+	}
+	else
+	{
+		angel_error("字符串findall方法第一个参数必须是字符串或者正则类型！");
+		return GETNULL;
 	}
 	return ret;
 }
 object sysmatch_string(object pattern,object range,object o)
 {
-	object regular = checkpatternparam(pattern);
-	if(!regular || ISSTR(regular))
-	{
-		angel_error("字符串match方法第一个参数必须是正则类型！");
-		return GETNULL;
-	}
 	int res[2];
-	if(!checkrangeparam(range,GETSTR(o)->len/2-1,res))
-	{
-		angel_error("字符串match方法第二个参数必须是range类型！");
-		return GETNULL;
-	}
-	object ret = (object)initinteger(reg_match(GETREGULAR(regular),(wchar *)GETSTR(o)->s,
+	ARG_CHECK(pattern,REGULAR,"regular",1);
+	object ret = (object)initinteger(reg_match(GETREGULAR(pattern),(wchar *)GETSTR(o)->s,
 		res[0],res[1]));
 	if(!ISREGULAR(pattern)) {
-		DECREF(regular);
+		DECREF(pattern);
 	}
 	return ret;
+}
+object sysnum_string(object o){
+	char *temp = tomult(GETSTR(o));
+	object_int ret = initinteger(toint(temp));
+	free(temp);
+	return (object)ret;
 }

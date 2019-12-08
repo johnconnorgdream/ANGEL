@@ -74,6 +74,12 @@ void sys_realloc_list(object_list l,int resize);
 void lock_const_sector();
 void merge_page();
 void reset_heap();
+void *angel_sys_calloc(int count,int size);
+void *angel_sys_malloc(int size);
+void *angel_sys_memset(void* addr,int val,int size);
+void *angel_sys_memcpy(void *target,void *source,int size);
+
+
 __forceinline void angel_free_page(void *addr)
 {
 	page test = (page)addr-1;

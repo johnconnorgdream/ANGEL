@@ -16,6 +16,11 @@ printl(ms.size())
 //for(item in ms) printl(s[item])
 //ms = s.findall(r)
 
+c = readfile('f:\\visual studio2010\\vc\\vcprojects\\angel3\\Example\\algo.angel')*1000
+printl('hello')
+res = c.findall(regular('(\w)+'))
+scan()
+for(item in res) printl(c[item])
 /*
 r = regular('/(acd)+/')
 //print(s)

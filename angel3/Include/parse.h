@@ -36,6 +36,8 @@ extern "c"{
 #define AND 18
 #define OR 19
 #define DOT 20
+#define DYNAMIC_CALL 21
+
 
 
 #define NUM 29  //组合类型

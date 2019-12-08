@@ -1,6 +1,4 @@
-
 #include <stdlib.h>
-#include <memory.h>
 #include "parse.h"
 #include "data.h"
 #include "runtime.h"
@@ -39,8 +37,8 @@ void *popcollection(collection c)
 }
 collection initcollection(int count)
 {
-	collection c=(collection)malloc(sizeof(collectionnode));
-	c->element = (void **)calloc(count,sizeof(void *));
+	collection c=(collection)angel_sys_malloc(sizeof(collectionnode));
+	c->element = (void **)angel_sys_calloc(count,sizeof(void *));
 	c->size = 0;
 	c->alloc = count;
 	return c;
@@ -52,7 +50,7 @@ void addcollection(collection base,void *el)
 		base->alloc *= 2;
 		base->element=(void **)realloc(base->element,
 			base->alloc*sizeof(void *));
-		memset(base->element+base->size,0,(base->alloc-base->size)*sizeof(void *));
+		angel_sys_memset(base->element+base->size,0,(base->alloc-base->size)*sizeof(void *));
 	}
 	base->element[base->size++]=el;
 }
@@ -68,7 +66,7 @@ void clearcollection(collection c)
 
 linkcollection initlink()
 {
-	linkcollection ret = (linkcollection)malloc(sizeof(linkcollectionnode));
+	linkcollection ret = (linkcollection)angel_sys_malloc(sizeof(linkcollectionnode));
 	ret->data = NULL;
 	ret->next = ret->pre = ret;
 	return ret;
@@ -107,8 +105,8 @@ void clearlink(linkcollection head)
 
 indexlist initindexlist()
 {
-	indexlist il=(indexlist)malloc(sizeof(indexlistnode));
-	il->item=(uint16_t *)calloc(5,sizeof(uint16_t));
+	indexlist il=(indexlist)angel_sys_malloc(sizeof(indexlistnode));
+	il->item=(uint16_t *)angel_sys_calloc(5,sizeof(uint16_t));
 	il->alloc=5;
 	il->len=0;
 	return il;
@@ -125,10 +123,10 @@ void addindexlist(indexlist base,uint16_t s)
 
 funlist initfunlist()
 {
-	funlist fl=(funlist)malloc(sizeof(funlistnode));
+	funlist fl=(funlist)angel_sys_malloc(sizeof(funlistnode));
 	fl->alloc_size=10;  //初始大小
 	fl->len=0;
-	fl->fun_item=(fun *)calloc(10,sizeof(fun));
+	fl->fun_item=(fun *)angel_sys_calloc(10,sizeof(fun));
 	return fl;
 }
 void _addfun(funlist fl,fun f)
@@ -222,8 +220,8 @@ int getclassoffset(char *classname)
 
 env initenv()
 {
-	env el=(env)malloc(sizeof(envnode));
-	env_elenode *emem = (env_elenode *)malloc(sizeof(env_elenode)*runtime_max_size);
+	env el=(env)angel_sys_malloc(sizeof(envnode));
+	env_elenode *emem = (env_elenode *)angel_sys_malloc(sizeof(env_elenode)*runtime_max_size);
 	for(int i=0; i<runtime_max_size; i++)
 	{
 		el->env_item[i]=&emem[i];
@@ -266,14 +264,14 @@ int counttempvar()
 runtime_stack initruntime(int stacksize)
 {
 	unsigned long i;
-	runtime_stack rs = (runtime_stack)malloc(sizeof(runtime_stacknode));
+	runtime_stack rs = (runtime_stack)angel_sys_malloc(sizeof(runtime_stacknode));
 	rs->stack_size = stacksize;
 
 	int total_alloc = (stacksize * sizeof(object) + stacksize * stack_heap_size);
-	rs->data = (object *)malloc(total_alloc);
+	rs->data = (object *)angel_sys_malloc(total_alloc);
 
 	//将栈的内容初始化为angel_uninitial
-	memset(rs->data, 0, total_alloc);
+	angel_sys_memset(rs->data, 0, total_alloc);
 	for(i = 0; i < stacksize; i++)
 		rs->data[i] = angel_uninitial;
 
@@ -298,8 +296,8 @@ runtime_stack initruntime(int stacksize)
 
 pclass initclass(char *name)
 {
-	pclass c=(pclass)malloc(sizeof(classnode));
-	memset(c,0,sizeof(classnode));
+	pclass c=(pclass)angel_sys_malloc(sizeof(classnode));
+	angel_sys_memset(c,0,sizeof(classnode));
 	c->name=name;
 	c->mem_f=initfunlist();
 	c->static_f=initfunlist();
@@ -329,18 +327,18 @@ void delete_class()
 */
 bytecode initbytearray()
 {
-	bytecode head=(bytecode)malloc(sizeof(bytecodenode));
-	memset(head,0,sizeof(bytecodenode));
+	bytecode head=(bytecode)angel_sys_malloc(sizeof(bytecodenode));
+	angel_sys_memset(head,0,sizeof(bytecodenode));
 	head->alloc_size=bytecode_base_size;
-	head->code=(char *)calloc(head->alloc_size,sizeof(char));  //初始分配
+	head->code=(char *)angel_sys_calloc(head->alloc_size,sizeof(char));  //初始分配
 	return head;
 }
 bytecode resize(bytecode bc)
 {
 	char *oldvalue=bc->code;
 	bc->alloc_size*=2;   //分配空间大小的增长过程。
-	bc->code=(char *)calloc(bc->alloc_size,sizeof(char));
-	memcpy(bc->code,oldvalue,bc->len*sizeof(char));
+	bc->code=(char *)angel_sys_calloc(bc->alloc_size,sizeof(char));
+	angel_sys_memcpy(bc->code,oldvalue,bc->len*sizeof(char));
 	free(oldvalue);
 	oldvalue=NULL;
 	return bc;

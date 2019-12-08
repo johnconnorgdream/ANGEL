@@ -61,11 +61,12 @@ findel(matrix,el){
 	}
 	ret [-1,-1]
 }
+/*
 matrix.add([1,2,3,4,5,6])
 matrix.add([5,6,7,8,9,10])
 matrix.add([7,8,9,11,12,13])
 matrix.add([10,15,16,17,18,19])
-
+*/
 
 printmatrixmagic(matrix){
 	xsize = matrix[0].size();
@@ -146,6 +147,4 @@ insertionSortList(l) {
     }
     ret head;
 }
-for(i in 1~1000000)
-netaddr('localhost','http')
-//print(netname('192.168.231.1'))
+

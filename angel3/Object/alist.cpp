@@ -1,4 +1,3 @@
-#include <memory.h>
 #include <stdlib.h>
 #include "data.h"
 #include "execute.h"
@@ -16,7 +15,7 @@ object_list initarray(int count)
 	res->type = LIST;
 	res->alloc_size = count;
 	res->item = (object *)angel_alloc_page((object)res,count * sizeof(object));
-	memset(res->item,0,res->alloc_size*sizeof(object));
+	angel_sys_memset(res->item,0,res->alloc_size*sizeof(object));
 	res->len = 0;
 	return res;
 }
@@ -26,9 +25,9 @@ void expendlistsize(object_list ol,int resizelen)
 	int len = ol->alloc_size;
 	object *newaddr = (object *)angel_alloc_page((object)ol,resizelen*sizeof(object)); //注意这里可能会在gc之后改变原来addr的指向
 	object *addr = ol->item;
-	memset(newaddr+len,0,(resizelen-len)*sizeof(object));
+	angel_sys_memset(newaddr+len,0,(resizelen-len)*sizeof(object));
 	ol->alloc_size = resizelen;
-	memcpy(newaddr,addr,len*sizeof(object));
+	angel_sys_memcpy(newaddr,addr,len*sizeof(object));
 	angel_free_page(addr);
 	ol->item = newaddr;
 }
@@ -84,7 +83,7 @@ int insertlist(object_list l,object_list m,int pos)
 	int llen = l->len,mlen = m->len;
 	if(l->alloc_size < llen + mlen)
 		expendlistsize(l,(llen>mlen?llen:mlen)*2);
-	memcpy(l->item+pos+mlen+1,l->item+pos,mlen*sizeof(object));
+	angel_sys_memcpy(l->item+pos+mlen+1,l->item+pos,mlen*sizeof(object));
 	for(int i = pos; i<mlen+pos; i++)
 		assign_execute(l->item,i,m->item[i-pos]);
 	l->len += mlen;
@@ -200,7 +199,7 @@ int storeslicelist_asslice(object_list l,object_range targetrange,object_slice s
 		else
 		{
 			//需要设置缓冲区
-			object *cache = (object *)calloc(sizeof(object),n);
+			object *cache = (object *)angel_sys_calloc(sizeof(object),n);
 			for (int i = 0; i < n; i++) {
 				int out = b2 + i * step2;
 				cache[i] = GETLIST(base)->item[out];		
